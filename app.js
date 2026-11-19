@@ -30,86 +30,7 @@ function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show')
 function move(page){state.page=page;persist();
 render();
 
-// 서버 상태를 불러오는 중인지 확인
-let liveSyncBusy = false;
 
-async function syncWithServer() {
-  if (liveSyncBusy || submitting || !state.name) return;
-
-  liveSyncBusy = true;
-
-  try {
-    const account = await window.ECONIGHT_LIVE.getAccount();
-
-    const previousPhase = state.phase;
-    const previousRound = state.round;
-
-    // 서버에 저장된 실제 자산 반영
-    state.name = account.name;
-    state.cash = account.cash;
-    state.prices = account.prices;
-    state.changes = account.changes;
-    state.round = account.round_no;
-    state.phase = account.phase;
-
-    // 서버 기준 보유 수량 적용
-    state.holdings = {};
-
-    for (const item of account.holdings) {
-      const stock = STOCKS[item.stock_index];
-      if (stock) {
-        state.holdings[stock.code] = item.quantity;
-      }
-    }
-
-    // 서버 기준 거래 내역 적용
-    state.orders = account.trades.map(t => ({
-      type: t.side === 'BUY' ? 'buy' : 'sell',
-      name: STOCKS[t.stock_index].name,
-      round: t.round_no,
-      price: t.price,
-      qty: t.quantity
-    })).reverse();
-
-    // 관리자가 라운드를 변경한 경우 화면 전환
-    if (
-      previousPhase !== state.phase ||
-      previousRound !== state.round
-    ) {
-      if (state.phase === 'BRIEFING') {
-        state.page = 'briefing';
-      } else if (state.phase === 'TRADING') {
-        state.page = 'market';
-        orderQuantities = Array(8).fill(1);
-      } else if (state.phase === 'LOBBY') {
-        state.page = 'lobby';
-      }
-    }
-
-    // 기존 규칙·종목 소개 중에는 화면 유지
-    persist();
-
-    // 자산 및 라운드 정보 갱신
-    if (
-      ['lobby', 'briefing', 'market', 'portfolio'].includes(
-        state.page
-      )
-    ) {
-      render();
-    }
-
-  } catch (error) {
-    console.warn('서버 동기화 실패:', error.message);
-  } finally {
-    liveSyncBusy = false;
-  }
-}
-
-// 페이지 접속 시 동기화
-syncWithServer();
-
-// 5초마다 서버 상태 확인
-setInterval(syncWithServer, 5000);
 scrollTo({top:0,behavior:'instant'})}
 function company(idx){const s=STOCKS[idx];return {...s,index:idx,current:state.prices[idx],change:state.changes[idx],held:state.holdings[s.code]||0}}
 function account(){const invested=state.prices.reduce((sum,p,i)=>sum+p*(state.holdings[STOCKS[i].code]||0),0);return{total:state.cash+invested,invested,rate:(state.cash+invested-INITIAL_CASH)/INITIAL_CASH*100}}
@@ -418,3 +339,83 @@ document.addEventListener('submit', async (e) => {
 });
 
 render();
+// 서버 상태를 불러오는 중인지 확인
+let liveSyncBusy = false;
+
+async function syncWithServer() {
+  if (liveSyncBusy || submitting || !state.name) return;
+
+  liveSyncBusy = true;
+
+  try {
+    const account = await window.ECONIGHT_LIVE.getAccount();
+
+    const previousPhase = state.phase;
+    const previousRound = state.round;
+
+    // 서버에 저장된 실제 자산 반영
+    state.name = account.name;
+    state.cash = account.cash;
+    state.prices = account.prices;
+    state.changes = account.changes;
+    state.round = account.round_no;
+    state.phase = account.phase;
+
+    // 서버 기준 보유 수량 적용
+    state.holdings = {};
+
+    for (const item of account.holdings) {
+      const stock = STOCKS[item.stock_index];
+      if (stock) {
+        state.holdings[stock.code] = item.quantity;
+      }
+    }
+
+    // 서버 기준 거래 내역 적용
+    state.orders = account.trades.map(t => ({
+      type: t.side === 'BUY' ? 'buy' : 'sell',
+      name: STOCKS[t.stock_index].name,
+      round: t.round_no,
+      price: t.price,
+      qty: t.quantity
+    })).reverse();
+
+    // 관리자가 라운드를 변경한 경우 화면 전환
+    if (
+      previousPhase !== state.phase ||
+      previousRound !== state.round
+    ) {
+      if (state.phase === 'BRIEFING') {
+        state.page = 'briefing';
+      } else if (state.phase === 'TRADING') {
+        state.page = 'market';
+        orderQuantities = Array(8).fill(1);
+      } else if (state.phase === 'LOBBY') {
+        state.page = 'lobby';
+      }
+    }
+
+    // 기존 규칙·종목 소개 중에는 화면 유지
+    persist();
+
+    // 자산 및 라운드 정보 갱신
+    if (
+      ['lobby', 'briefing', 'market', 'portfolio'].includes(
+        state.page
+      )
+    ) {
+      render();
+    }
+
+  } catch (error) {
+    console.warn('서버 동기화 실패:', error.message);
+  } finally {
+    liveSyncBusy = false;
+  }
+}
+
+// 페이지 접속 시 동기화
+syncWithServer();
+
+// 5초마다 서버 상태 확인
+setInterval(syncWithServer, 5000);
