@@ -441,6 +441,21 @@ async function syncWithServer() {
     state.round = account.round_no;
     state.phase = account.phase;
     state.publishedResult = game.published_result;
+    
+if (state.publishedResult) {
+  if (state.round === 3) {
+    // 서버의 산업 번호 1~4를 앱의 0~3으로 변환
+    state.outcome =
+      state.publishedResult.selected_sectors.map(
+        sector => sector - 1
+      );
+  } else {
+    // 나머지 라운드는 A(0) 또는 B(1)
+    state.outcome = state.publishedResult.choice;
+  }
+} else {
+  state.outcome = null;
+}
 
     state.holdings = {};
 
@@ -471,15 +486,22 @@ async function syncWithServer() {
         orderQuantities = Array(8).fill(1);
       } else if (state.phase === 'LOBBY') {
         state.page = 'lobby';
-      } else if (state.phase === 'LOCKED') {
-        state.page = 'locked';
-      }
+     
+} else if (state.phase === 'LOCKED') {
+  state.page = 'locked';
+} else if (
+  state.phase === 'REVEALED' &&
+  state.publishedResult
+) {
+  state.page = 'result';
+}
+
     }
 
     persist();
 
     if (
-      ['lobby', 'briefing', 'market', 'portfolio', 'locked']
+      ['lobby', 'briefing', 'market', 'portfolio', 'locked', 'result']
         .includes(state.page)
     ) {
       render();
