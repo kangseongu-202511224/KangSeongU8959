@@ -588,33 +588,54 @@ if (state.publishedResult) {
       qty: t.quantity
     })).reverse();
 
-    if (
+ 
+    // 대회 종료 시 실제 참가자 순위 불러오기
+    if (state.phase === 'FINISHED') {
+      const leaderboard =
+        await window.ECONIGHT_LIVE.getLeaderboard();
+
+      state.rankings = leaderboard.map(r => ({
+        rank: Number(r.rank),
+        name: r.name,
+        rate: Number(r.rate),
+        assets: Number(r.assets),
+        mine: r.name === account.name
+      }));
+
+      state.page = 'final';
+
+    } else if (
       previousPhase !== state.phase ||
       previousRound !== state.round
     ) {
       if (state.phase === 'BRIEFING') {
         state.page = 'briefing';
+
       } else if (state.phase === 'TRADING') {
         state.page = 'market';
         orderQuantities = Array(8).fill(1);
+
       } else if (state.phase === 'LOBBY') {
         state.page = 'lobby';
-     
-} else if (state.phase === 'LOCKED') {
-  state.page = 'locked';
-} else if (
-  state.phase === 'REVEALED' &&
-  state.publishedResult
-) {
-  state.page = 'result';
-}
 
+      } else if (state.phase === 'LOCKED') {
+        state.page = 'locked';
+
+      } else if (
+        state.phase === 'REVEALED' &&
+        state.publishedResult
+      ) {
+        state.page = 'result';
+      }
     }
+
 
     persist();
 
     if (
-      ['lobby', 'briefing', 'market', 'portfolio', 'locked', 'result']
+      
+['lobby', 'briefing', 'market', 'portfolio', 'locked', 'result', 'final']
+
         .includes(state.page)
     ) {
       render();
