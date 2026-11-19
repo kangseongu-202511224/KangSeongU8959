@@ -70,23 +70,78 @@ function marketRows(){
  }).join('')}</div>`;
 }
 function market(){return page(`${brand(`ROUND ${state.round} · 거래 중`)}<h1 class="title">뉴스를 읽고<br>직접 투자해 보세요</h1>${accountCard()}${newsBlock()}${marketRows()}<div class="gap16"></div><button class="btn secondary" data-action="portfolio">내 보유 주식 · 주문내역 보기</button><p class="muted-mini" style="text-align:center;margin-top:18px">※ 이번 버전은 참가자 시연판입니다. 실제 대회 결과는 관리자 마감 후 서버에서 추첨해야 합니다.</p>`,footer('시연 · 주문 마감 후 결과 발표　›','demo-reveal','', '<p class="bottom-note">실제 대회에서는 운영진이 주문을 마감합니다.</p>'))}
-function inlineOrder(index,type){
- if(submitting||state.phase!=='TRADING'||state.page!=='market')return;
- const s=company(index),q=orderQuantities[index];
- if(!Number.isInteger(q)||q<1)return toast('주문 수량을 확인해 주세요.');
- const max=type==='buy'?Math.floor(state.cash/s.current):s.held;
- if(q>max)return toast(type==='buy'?'보유 현금이 부족해요.':'보유 주식이 부족해요.');
- submitting=true;
- try{
-   const amount=s.current*q;
-   if(type==='buy'){state.cash-=amount;state.holdings[s.code]=s.held+q}
-   else{state.cash+=amount;state.holdings[s.code]=s.held-q}
-   state.orders.push({type,name:s.name,round:state.round,price:s.current,qty:q});
-   persist();
-   toast(`${s.name} ${q}주 ${type==='buy'?'매수':'매도'} 완료!`);
-   orderQuantities[index]=1;
- }finally{submitting=false;render()}
+
+async function inlineOrder(index, type) {
+  if (submitting || state.page !== 'market') return;
+
+  const quantity = orderQuantities[index];
+  const side = type === 'buy' ? 'BUY' : 'SELL';
+
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    return toast('주문 수량을 확인해주세요.');
+  }
+
+  submitting = true;
+
+  // 각 주문을 구별하는 고유 ID
+  const requestId = crypto.randomUUID();
+
+  try {
+    // Supabase 서버에서 주문 검증 및 체결
+    const result = await window.ECONIGHT_LIVE.placeOrder(
+      index,
+      side,
+      quantity,
+      requestId
+    );
+
+    // 체결 후 서버에 저장된 실제 자산 불러오기
+    const account = await window.ECONIGHT_LIVE.getAccount();
+
+    state.cash = account.cash;
+    state.prices = account.prices;
+    state.changes = account.changes;
+    state.round = account.round_no;
+    state.phase = account.phase;
+
+    // 서버의 보유 주식 수량 적용
+    state.holdings = {};
+
+    for (const holding of account.holdings) {
+      const stock = STOCKS[holding.stock_index];
+
+      if (stock) {
+        state.holdings[stock.code] = holding.quantity;
+      }
+    }
+
+    // 서버의 실제 거래 내역 적용
+    state.orders = account.trades.map(trade => ({
+      type: trade.side === 'BUY' ? 'buy' : 'sell',
+      name: STOCKS[trade.stock_index].name,
+      round: trade.round_no,
+      price: trade.price,
+      qty: trade.quantity
+    })).reverse();
+
+    orderQuantities[index] = 1;
+
+    persist();
+
+    toast(
+      `${STOCKS[index].name} ${quantity}주 ` +
+      `${side === 'BUY' ? '매수' : '매도'} 완료!`
+    );
+
+  } catch (error) {
+    toast('거래 실패: ' + error.message);
+
+  } finally {
+    submitting = false;
+    render();
+  }
 }
+
 function portfolio(){const a=account();return page(`${brand('내 투자 현황')}<h1 class="title">내 포트폴리오</h1>${accountCard()}<h2 class="section">보유 주식</h2><div class="card">${STOCKS.map((s,i)=>company(i)).filter(s=>s.held).map(s=>`<div class="stockrow"><b>${s.name}</b><div style="text-align:right">${s.held}주<div class="sector">${won(s.held*s.current)}</div></div></div>`).join('')||'<div class="empty">아직 보유한 주식이 없어요.</div>'}</div><h2 class="section">주문 내역</h2><div class="card">${state.orders.slice().reverse().map(o=>`<div class="stockrow"><div><b>${o.type==='buy'?'매수':'매도'} · ${esc(o.name)}</b><div class="sector">${o.round}라운드 · ${o.qty}주</div></div><b>${won(o.price*o.qty)}</b></div>`).join('')||'<div class="empty">아직 주문 내역이 없어요.</div>'}</div>`,footer('시장으로 돌아가기　›','back-market'))}
 const randomInt=n=>{const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n};
 // 시연용 결과 추첨. 실제 대회에서는 반드시 서버에서 주문 잠금 후 실행.
