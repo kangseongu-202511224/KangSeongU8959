@@ -1,0 +1,50 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ECONIGHT INVEST | LIVE SCREEN</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#080f22;color:#f8fafc;font-family:system-ui,'Apple SD Gothic Neo',sans-serif;min-height:100vh}
+#page{max-width:1600px;min-height:100vh;margin:auto;padding:4vh 5vw;display:flex;flex-direction:column;justify-content:center}
+.brand{font-size:clamp(16px,2vw,27px);letter-spacing:.25em;font-weight:800;color:#93c5fd}.big{font-size:clamp(44px,6vw,110px);line-height:1.12;letter-spacing:-.06em;margin:30px 0}
+.sub{font-size:clamp(18px,2.2vw,32px);line-height:1.6;color:#b8c5df}.stats{display:flex;flex-wrap:wrap;gap:16px;margin-top:40px}.stat{background:#172541;border:1px solid #354467;padding:25px 35px;border-radius:22px;flex:1;min-width:210px}
+.label{font-size:clamp(15px,1.3vw,22px);color:#91a6cc}.num{font-size:clamp(29px,3vw,52px);font-weight:900;margin-top:12px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin:22px 0}.company{padding:26px 18px;border-radius:20px;background:#14233e;border:1px solid #2b3c5b}.company h3{font-size:clamp(16px,1.5vw,25px);margin:0 0 12px}.company .price{font-size:clamp(20px,2.2vw,39px);font-weight:800}.company .diff{font-size:clamp(18px,1.5vw,28px);margin-top:10px;font-weight:700}.up{color:#ff7185}.down{color:#64a9ff}.neutral{color:#cad5e6}.podium{display:flex;align-items:flex-end;justify-content:center;gap:22px;margin:40px 0}.pod{width:min(30%,360px);border:1px solid #465b84;background:linear-gradient(180deg,#283e68,#13233e);border-radius:25px 25px 8px 8px;text-align:center;padding:25px 14px;min-height:180px}.pod:first-child{min-height:230px}.pod.champ{min-height:340px;border-color:#f6c966;background:linear-gradient(180deg,#624d23,#182744)}.medal{font-size:clamp(35px,5vw,75px)}.pod h2{font-size:clamp(20px,2.2vw,40px);margin:12px 0}.pod p{font-size:clamp(16px,1.5vw,27px);color:#c6d5ed}.announce{margin-top:30px;padding:20px 28px;border:1px solid #f5c36b;background:#4b381a;border-radius:16px;font-size:clamp(18px,2vw,30px)}.footer{position:fixed;bottom:18px;left:5vw;color:#7287ad;font-size:13px}#err{position:fixed;top:12px;right:18px;color:#f8b4b4;font-size:13px}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.podium{gap:6px}.pod{width:33%}.stat{min-width:140px}.company{padding:12px}.brand{letter-spacing:.08em}}
+</style></head><body><div id="page"><div class="brand">ECONIGHT INVEST · 2026 경제인의 밤</div><h1 class="big">화면을 연결하는 중...</h1></div><div id="err"></div><div class="footer">LIVE · 5초마다 자동 업데이트 · F11 전체화면</div>
+<script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const db=window.supabase.createClient(window.ECONIGHT_SUPABASE_URL,window.ECONIGHT_SUPABASE_PUBLISHABLE_KEY), $=s=>document.querySelector(s);
+const N=['삼성우전자','SK하이재하','유혜니클로','파타고미나','포르승재','경현대자동차','현근당','삼성바이오새로직스'];
+const NE=[['AI가 전기를 다 쓴다?','전력 공급 우선순위 발표'],['미국 대통령 선거','후보 A와 후보 B, 최종 결과는?'],['외국인, 국내 증시에 100조 원 투자!','투자 대상 산업 2~3개는 거래 종료 후 공개'],['원·달러 환율 급변','환율 상승일까, 하락일까?']];
+const X=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+const pct=n=>(Number(n)>0?'+':'')+Number(n||0).toFixed(2)+'%';
+const won=n=>Number(n||0).toLocaleString('ko-KR')+'원';
+const stat=(k,v)=>'<div class="stat"><div class="label">'+X(k)+'</div><div class="num">'+X(v)+'</div></div>';
+function prices(d){return '<div class="grid">'+N.map((name,i)=>{const delta=Number(d.changes?.[i]||0);return '<div class="company"><h3>'+X(name)+'</h3><div class="price">'+won(d.prices?.[i])+'</div><div class="diff '+(delta>0?'up':delta<0?'down':'neutral')+'">'+pct(delta)+'</div></div>'}).join('')+'</div>'}
+function render(d){
+  const phase=d.phase,mode=d.screen_mode;
+  const canResult=['REVEALED','FINISHED'].includes(phase);
+  let type=mode==='AUTO'?(phase==='BRIEFING'?'BRIEFING':phase==='TRADING'||phase==='PAUSED'?'MARKET':phase==='REVEALED'?'RESULT':phase==='FINISHED'?'PODIUM':'WAIT'):mode;
+  // 화면 모드를 강제로 설정하더라도 미발표 결과나 시상대는 공개하지 않음
+  if(type==='RESULT'&&!canResult)type='WAIT';
+  if(type==='PODIUM'&&!(phase==='FINISHED'&&d.podium_public))type='WAIT';
+  const round=Math.max(0,d.round_no||0),news=NE[round-1]||['대회 준비','행사 안내를 기다려 주세요'];
+  let html='<div class="brand">ECONIGHT INVEST · 2026 경제인의 밤</div>';
+  if(type==='BRIEFING') html+='<h1 class="big">ROUND '+round+'<br>뉴스 브리핑</h1><p class="sub">'+X(news[0])+'<br>'+X(news[1])+'</p>';
+  else if(type==='MARKET')html+='<h1 class="big">ROUND '+round+' · '+(phase==='PAUSED'?'거래 일시 중단':'거래 진행 중')+'</h1>'+prices(d)+(d.round_end_at?'<p class="sub">거래 안내 타이머 · '+new Date(d.round_end_at).toLocaleTimeString('ko-KR')+'</p>':'');
+  else if(type==='RESULT'){
+    const out=d.published_result;
+    let desc='라운드 결과 발표';
+    if(round===3&&Array.isArray(out?.selected_sectors))desc='외국인 투자 집중 산업: '+out.selected_sectors.map(i=>['IT·반도체','의류·패션','자동차·모빌리티','바이오·제약'][i-1]||i).join(' · ');
+    else if(out?.choice!==undefined&&round!==3)desc=(round===1?['AI 데이터센터 우선 공급','일반 산업 공장 우선 공급']:round===2?['후보 A 당선','후보 B 당선']:['환율 상승 · 원화 약세','환율 하락 · 원화 강세'])[Number(out.choice)]||desc;
+    html+='<h1 class="big">ROUND '+round+' · 결과 공개</h1><p class="sub">'+X(desc)+'</p>'+prices(d);
+  }
+  else if(type==='PODIUM'){
+    const top=d.top3||[];
+    const order=[top.find(x=>Number(x.rank)===2),top.find(x=>Number(x.rank)===1),top.find(x=>Number(x.rank)===3)].filter(Boolean);
+    html+='<h1 class="big">FINAL · 명예의 전당</h1><div class="podium">'+order.map(r=>'<div class="pod '+(Number(r.rank)===1?'champ':'')+'"><div class="medal">'+({1:'🥇',2:'🥈',3:'🥉'}[r.rank])+'</div><h2>'+X(r.name)+'</h2><p>'+r.rank+'위 · '+won(r.assets)+'</p><p>'+pct(r.rate)+'</p></div>').join('')+'</div>';
+  }
+  else html+='<h1 class="big">ECONIGHT INVEST</h1><p class="sub">'+(phase==='FINISHED'?'최종 시상식 준비 중입니다.':'다음 순서를 기다려 주세요.')+'</p>';
+  if(d.announcement)html+='<div class="announce">📢 '+X(d.announcement)+'</div>';
+  $('#page').innerHTML=html;
+}
+let inFlight=false;async function sync(){if(inFlight)return;inFlight=true;try{const {data,error}=await db.rpc('ei_projector_data');if(error)throw error;render(data);$('#err').textContent='';}catch(e){$('#err').textContent='연결 확인 필요: '+e.message;}finally{inFlight=false}}
+sync();setInterval(sync,5000);
+</script></body></html>

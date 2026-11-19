@@ -1,0 +1,27 @@
+/* ECONIGHT INVEST 운영센터 — 기존 관리자 화면의 확장 스타일 */
+main{max-width:1050px!important}
+.ei-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.ei-kpi{border-radius:14px;background:#f1f5fa;padding:14px}
+.ei-kpi small{display:block;color:#64748b;font-size:12px}.ei-kpi b{display:block;font-size:22px;margin:6px 0 2px}
+.ei-flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ei-tabs{display:flex;gap:8px;overflow:auto;padding:4px 0 12px}
+.ei-tabs button{width:auto;white-space:nowrap;background:#e7ecf4;color:#334155;padding:10px 14px;font-size:14px}
+.ei-tabs button.active{background:#2563eb;color:white}
+.ei-panel{display:none}.ei-panel.active{display:block}
+.ei-stack{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ei-note{color:#64748b;font-size:13px;line-height:1.6}
+.ei-table-wrap{overflow:auto;max-height:440px;border:1px solid #e2e8f0;border-radius:12px}
+.ei-table{border-collapse:collapse;width:100%;min-width:560px;font-size:13px}
+.ei-table th,.ei-table td{padding:10px;text-align:left;border-bottom:1px solid #e2e8f0;white-space:nowrap}
+.ei-table th{position:sticky;top:0;background:#f8fafc;z-index:1}
+.ei-table tr:hover td{background:#f8fafc}
+.ei-table button{width:auto;font-size:12px;padding:7px 10px;margin:0}
+.ei-input{padding:10px!important;margin:4px 0!important}
+.ei-mini{width:auto!important;padding:9px 13px!important;margin:3px!important}
+.ei-soft{background:#eff6ff;color:#1d4ed8}.ei-warn{background:#fef2f2;border:1px solid #fecaca;padding:12px;border-radius:12px}
+.ei-good{color:#166534}.ei-bad{color:#b91c1c}
+.ei-pill{font-size:12px;padding:3px 8px;border-radius:999px;background:#e2e8f0;color:#334155}
+.ei-clock{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums}
+.ei-detail{white-space:pre-wrap;background:#f8fafc;padding:14px;border-radius:12px;line-height:1.7;overflow:auto}
+#ei-toast{position:fixed;bottom:18px;right:18px;max-width:360px;background:#172033;color:white;padding:12px 16px;border-radius:12px;box-shadow:0 8px 28px #16204040;display:none;z-index:20}
+@media(max-width:720px){.ei-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ei-stack{grid-template-columns:1fr}}
