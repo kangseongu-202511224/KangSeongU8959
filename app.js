@@ -227,5 +227,56 @@ document.addEventListener('click',e=>{
    state=stateDefaults();orderQuantities=Array(8).fill(1);persist();return move('welcome');
  }
 });
-document.addEventListener('submit',e=>{if(e.target.id!=='name-form')return;e.preventDefault();const name=$('username').value.trim();if(name.length<2||name.length>20)return toast('이름을 2~20자로 입력해 주세요.');state.name=name;return move('rules')});
+
+document.addEventListener('submit', async (e) => {
+  if (e.target.id !== 'name-form') return;
+
+  e.preventDefault();
+
+  const name = $('username').value.trim();
+
+  if (name.length < 1 || name.length > 20) {
+    return toast('이름은 1~20자로 입력해 주세요.');
+  }
+
+  if (submitting) return;
+
+  submitting = true;
+
+  const button = e.target.querySelector(
+    'button[type="submit"]'
+  );
+
+  button.disabled = true;
+  button.textContent = '참가 등록 중...';
+
+  try {
+    // Supabase 서버에 참가자 등록 요청
+    const result = await window.ECONIGHT_LIVE.register(name);
+
+    // 서버에서 승인한 이름과 초기 자금 사용
+    state.name = result.name;
+    state.cash = result.cash;
+
+    // 예전 시연용 투자 기록 초기화
+    state.holdings = {};
+    state.orders = [];
+
+    persist();
+
+    toast('참가 등록이 완료되었습니다!');
+
+    move('rules');
+
+  } catch (error) {
+    toast('등록 실패: ' + error.message);
+
+    button.disabled = false;
+    button.textContent = '시작하기　›';
+
+  } finally {
+    submitting = false;
+  }
+});
+
 render();
