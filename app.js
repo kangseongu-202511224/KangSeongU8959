@@ -426,7 +426,10 @@ async function syncWithServer() {
   liveSyncBusy = true;
 
   try {
-    const account = await window.ECONIGHT_LIVE.getAccount();
+    
+   const account = await window.ECONIGHT_LIVE.getAccount();
+   const game = await window.ECONIGHT_LIVE.getGame();
+
 
     const previousPhase = state.phase;
     const previousRound = state.round;
@@ -437,6 +440,7 @@ async function syncWithServer() {
     state.changes = account.changes;
     state.round = account.round_no;
     state.phase = account.phase;
+    state.publishedResult = game.published_result;
 
     state.holdings = {};
 
