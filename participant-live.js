@@ -109,12 +109,28 @@ window.ECONIGHT_LIVE = (() => {
     };
   }
 
+  // 실제 참가자 최종 순위 조회
+  async function getLeaderboard() {
+    const { data, error } = await db.rpc(
+      'ei_get_leaderboard'
+    );
+
+    if (error) throw error;
+
+    return data.rankings;
+  }
+
+
+  return {
+   
   return {
     db,
     getSession,
     register,
     getAccount,
     getGame,
-    placeOrder
+    placeOrder,
+    getLeaderboard
   };
+
 })();
