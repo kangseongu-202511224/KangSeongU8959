@@ -285,8 +285,121 @@ function result(){
 }
 function nextRound(){if(state.phase==='WAITING'){state.round=1;state.phase='BRIEFING';state.changes=STOCKS.map(()=>0);move('briefing')}else if(state.phase==='REVEALED'&&state.round<4){state.round++;state.phase='BRIEFING';state.changes=STOCKS.map(()=>0);orderQuantities=Array(8).fill(1);move('briefing')}}
 function fakeRankings(){const a=account();const names=['김현근','유혜원','박지훈','이서연','정민수','최지현','한지민','오준서','강하늘','김태윤','유민서','송지호','배준호','문지안','오예린'];const names49=[...names,...Array.from({length:34},(_,i)=>`시연참가자${i+16}`)];let out=names49.map((name,i)=>{const rate=30-i*0.95;return{name,rate,assets:Math.round(INITIAL_CASH*(1+rate/100)),mine:false}});out.push({name:state.name,rate:a.rate,assets:a.total,mine:true});out.sort((x,y)=>y.assets-x.assets||x.name.localeCompare(y.name,'ko'));return out.map((x,i)=>({...x,rank:i+1}))}
-function podium(){const [a,b,c]=state.rankings;return `<div class="podium">${[b,a,c].map((r,i)=>`<div class="pod ${['second','first','third'][i]}"><span class="medal">${['🥈','👑','🥉'][i]}</span><b>${r.rank}위</b><div class="person">${esc(r.name)}</div><div class="pct">${pct(r.rate)}</div></div>`).join('')}</div>`}
-function finalPage(){let me=state.rankings.find(r=>r.mine),msg=msgRanges.find(m=>me.rank>=m.min&&me.rank<=m.max)||msgRanges.at(-1);return page(`${brand('FINAL · 시연')}<div class="banner"><h2>${esc(msg.title)}</h2><p class="sub">${esc(msg.sub)}</p></div><h2 class="section">TOP 3 시상식 단상</h2>${podium()}<div class="softcard"><div class="between"><div><div class="label">나의 최종 순위</div><div class="big blue">${me.rank}위 <span class="sub">/ 50명</span></div></div><div style="text-align:right"><div class="label">최종 수익률</div><div class="big ${me.rate>=0?'up':'down'}" style="font-size:25px">${pct(me.rate)}</div><div class="label">총자산 ${won(me.assets)}</div></div></div></div><h2 class="section">전체 순위 (50명)</h2><div class="card" style="padding:8px 10px"><div class="rankrow ranking-head"><span>순위</span><span>이름</span><span>수익률</span><span>최종 자산</span></div>${state.rankings.map(r=>`<div class="rankrow ${r.mine?'mine':''}"><span class="n">${r.rank}</span><span class="who">${esc(r.name)}${r.mine?' (나)':''}</span><span class="${r.rate>=0?'up':'down'}">${pct(r.rate)}</span><span>${won(r.assets)}</span></div>`).join('')}</div><div class="notice" style="margin-top:20px">⚠ 전체 순위의 다른 참가자들은 <b>시연용 가상 데이터</b>입니다. 실제 대회 순위가 아닙니다.</div>`,footer('처음부터 다시 체험하기　↻','reset'))}
+
+function podium() {
+  const top = state.rankings.slice(0, 3);
+
+  if (top.length === 0) {
+    return '<p class="sub">순위 정보가 없습니다.</p>';
+  }
+
+  const positions = [top[1], top[0], top[2]]
+    .filter(Boolean);
+
+  const medals = {
+    1: '👑',
+    2: '🥈',
+    3: '🥉'
+  };
+
+  const classes = {
+    1: 'first',
+    2: 'second',
+    3: 'third'
+  };
+
+  return `
+    <div class="podium">
+      ${positions.map(r => `
+        <div class="pod ${classes[r.rank] || ''}">
+          <span class="medal">${medals[r.rank] || '🏅'}</span>
+          <b>${r.rank}위</b>
+          <div class="person">${esc(r.name)}</div>
+          <div class="pct">${pct(Number(r.rate))}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function finalPage() {
+  const rankings = state.rankings || [];
+  const me = rankings.find(r => r.mine);
+
+  if (!me) {
+    return page(`
+      ${brand('FINAL · 결과 발표')}
+      <h1 class="title">최종 결과를 불러오는 중입니다</h1>
+      <p class="sub">잠시 후 순위가 표시됩니다.</p>
+    `);
+  }
+
+  const msg = msgRanges.find(
+    m => me.rank >= m.min && me.rank <= m.max
+  ) || msgRanges.at(-1);
+
+  return page(`
+    ${brand('FINAL · 2026 경제인의 밤')}
+
+    <div class="banner">
+      <h2>${esc(msg.title)}</h2>
+      <p class="sub">${esc(msg.sub)}</p>
+    </div>
+
+    <h2 class="section">TOP 3 시상식 단상</h2>
+    ${podium()}
+
+    <div class="softcard">
+      <div class="between">
+        <div>
+          <div class="label">나의 최종 순위</div>
+          <div class="big blue">
+            ${me.rank}위
+            <span class="sub">/ ${rankings.length}명</span>
+          </div>
+        </div>
+
+        <div style="text-align:right">
+          <div class="label">최종 수익률</div>
+          <div class="big ${me.rate >= 0 ? 'up' : 'down'}"
+               style="font-size:25px">
+            ${pct(Number(me.rate))}
+          </div>
+          <div class="label">
+            총자산 ${won(me.assets)}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section">
+      전체 순위 (${rankings.length}명)
+    </h2>
+
+    <div class="card" style="padding:8px 10px">
+      <div class="rankrow ranking-head">
+        <span>순위</span>
+        <span>이름</span>
+        <span>수익률</span>
+        <span>최종 자산</span>
+      </div>
+
+      ${rankings.map(r => `
+        <div class="rankrow ${r.mine ? 'mine' : ''}">
+          <span class="n">${r.rank}</span>
+          <span class="who">
+            ${esc(r.name)}${r.mine ? ' (나)' : ''}
+          </span>
+          <span class="${r.rate >= 0 ? 'up' : 'down'}">
+            ${pct(Number(r.rate))}
+          </span>
+          <span>${won(r.assets)}</span>
+        </div>
+      `).join('')}
+    </div>
+  `);
+}
+
 
 function lockedPage() {
   return page(`
