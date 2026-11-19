@@ -35,7 +35,34 @@ scrollTo({top:0,behavior:'instant'})}
 function company(idx){const s=STOCKS[idx];return {...s,index:idx,current:state.prices[idx],change:state.changes[idx],held:state.holdings[s.code]||0}}
 function account(){const invested=state.prices.reduce((sum,p,i)=>sum+p*(state.holdings[STOCKS[i].code]||0),0);return{total:state.cash+invested,invested,rate:(state.cash+invested-INITIAL_CASH)/INITIAL_CASH*100}}
 function brand(tag){return `<div class="head"><div class="smallbrand"><span class="logo">↗</span><div class="brand">ECONIGHT <span>INVEST</span></div></div><span class="pill">${esc(tag)}</span></div>`}
-function footer(label,action,disabled=false,extra=''){return `<div class="bottom">${extra}<button class="btn" data-action="${action}" ${disabled?'disabled':''}>${label}</button></div>`}
+
+function footer(label, action, disabled = false, extra = '') {
+  // 시연용 진행 버튼은 실제 대회에서 표시하지 않음
+  if (action.startsWith('demo-') || action === 'reset') {
+    return `
+      <div class="bottom">
+        <p class="bottom-note">
+          운영진의 다음 진행을 기다려 주세요.
+        </p>
+      </div>
+    `;
+  }
+
+  // 규칙 확인 등 일반 이동 버튼은 유지
+  return `
+    <div class="bottom">
+      ${extra}
+      <button
+        class="btn"
+        data-action="${action}"
+        ${disabled ? 'disabled' : ''}
+      >
+        ${label}
+      </button>
+    </div>
+  `;
+}
+
 function page(html,foot=''){return `<div class="app"><main class="page">${html}</main>${foot}</div>`}
 function intro(){return `<div class="app"><main class="welcome"><div class="welogo"><div class="symbol" aria-hidden="true">↗▂▅▇</div><h1>ECONIGHT<br><b>INVEST</b></h1><p>2026 경제인의 밤<br>모의투자 대회</p></div><form id="name-form"><label for="username"><b>참가자 이름</b></label><input id="username" class="name-field" placeholder="이름을 입력해 주세요" autocomplete="name" maxlength="20" required value="${esc(state.name)}"><button type="submit" class="btn">시작하기　›</button></form><p class="muted-mini" style="text-align:center;margin:18px 0">참가자 시점 체험판 · 실제 거래가 아닌 가상 거래입니다</p></main></div>`}
 function rules(){const instructions=[['00','현장 뉴스 브리핑','라운드 시작 전 앞쪽 대형 화면에서 AI 뉴스 브리핑을 시청하세요.'],['01','뉴스 확인','기사와 사진을 보고 직접 투자 방향을 판단하세요.'],['02','주식 거래','초기 현금 100만 원으로 8개 기업을 1주씩 사고팔 수 있습니다.'],['03','마감 후 추첨','마감 후 뉴스 결과를 무작위로 결정합니다.'],['04','주가 발표','뉴스 결말과 8개 기업의 실제 등락률을 함께 확인합니다.'],['05','최종 순위','4라운드 후 남은 현금 + 주식 평가액의 수익률로 경쟁합니다.']];return page(`${brand('대기실 ①')}<h1 class="title">${esc(state.name)}님,<br>대회 규칙을 확인해요</h1><p class="sub">경험이 없어도 뉴스를 읽고 직접 매매할 수 있어요.</p><div class="gap24"></div><div class="grid2"><div class="softcard"><div class="label">초기 투자금</div><div class="big blue">100만원</div></div><div class="softcard"><div class="label">진행 라운드</div><div class="big">4라운드</div></div></div><h2 class="section">대회 진행 방식</h2><div class="card">${instructions.map(a=>`<div class="flex" style="align-items:flex-start;margin:14px 0"><span class="stepdot">${a[0]}</span><div><b>${a[1]}</b><div class="sub">${a[2]}</div></div></div>`).join('')}</div><h2 class="section">주요 규칙</h2><div class="notice">• 기업별 주가 변동률은 <b>매 라운드 -30% ~ +30%</b>입니다.<br>• 같은 산업의 두 기업은 같은 방향으로 움직이지만 변동폭은 다릅니다.<br>• 현금을 모두 투자할 필요는 없어요.<br>• 거래 중에는 어떤 산업이 오를지 알려주지 않습니다.</div>`,footer('다음 · 8개 종목 소개　›','next-stocks'))}
