@@ -452,16 +452,6 @@ document.addEventListener('click',e=>{
  e.preventDefault();const action=el.dataset.action,v=el.dataset.value;
  if(action==='next-stocks')return move('stocks');
  if(action==='next-lobby')return move('lobby');
- if(action==='demo-next')return nextRound();
- if(action==='demo-trade'){
-   if(state.phase!=='BRIEFING')return;
-   state.phase='TRADING';orderQuantities=Array(8).fill(1);return move('market');
- }
- if(action==='demo-reveal')return revealDemo();
- if(action==='demo-final'){
-   if(state.round!==4||state.phase!=='REVEALED')return;
-   state.rankings=fakeRankings();state.phase='FINAL';return move('final');
- }
  if(action==='sector'){sectorFilter=v;return render()}
  if(action==='quantity-minus'||action==='quantity-plus'){
    const index=Number(v),s=company(index),cap=Math.max(Math.floor(state.cash/s.current),s.held,1);
