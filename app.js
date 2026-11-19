@@ -24,7 +24,25 @@ const pct=v=>(v>0?'+':'')+v.toFixed(2)+'%';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const stateDefaults=()=>({name:'',page:'welcome',round:0,phase:'WAITING',cash:INITIAL_CASH,holdings:{},prices:STOCKS.map(s=>s.price),changes:STOCKS.map(()=>0),orders:[],results:[],outcome:null,rankings:[]});
 let state=stateDefaults(),orderQuantities=Array(8).fill(1),sectorFilter='전체',submitting=false;
-try{let saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(saved&&Array.isArray(saved.prices)&&saved.prices.length===8)state={...state,...saved}}catch{}
+
+try {
+  const saved = JSON.parse(
+    localStorage.getItem(STORAGE_KEY) || 'null'
+  );
+
+  // 이전 기록에서 참가자 이름만 복원
+  // 현금·주식·가격·순위는 서버에서 다시 조회
+  if (
+    saved &&
+    typeof saved.name === 'string' &&
+    saved.name.trim()
+  ) {
+    state.name = saved.name.trim();
+  }
+} catch (error) {
+  console.warn('이전 참가자 정보 확인 실패:', error);
+}
+
 function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.remove('show'),2700)}
 function move(page){state.page=page;persist();
