@@ -127,13 +127,17 @@ async function inlineOrder(index, type) {
     );
 
     // 체결 후 서버에 저장된 실제 자산 불러오기
-    const account = await window.ECONIGHT_LIVE.getAccount();
+    
+     const account = await window.ECONIGHT_LIVE.getAccount();
+     const game = await window.ECONIGHT_LIVE.getGame();
+
 
     state.cash = account.cash;
     state.prices = account.prices;
     state.changes = account.changes;
     state.round = account.round_no;
     state.phase = account.phase;
+    state.publishedResult = game.published_result;
 
     // 서버의 보유 주식 수량 적용
     state.holdings = {};
