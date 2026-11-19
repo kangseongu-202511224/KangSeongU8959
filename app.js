@@ -415,6 +415,7 @@ render();
 // 서버 상태를 불러오는 중인지 확인
 let liveSyncBusy = false;
 
+
 async function syncWithServer() {
   if (liveSyncBusy || submitting || !state.name) return;
 
@@ -426,7 +427,6 @@ async function syncWithServer() {
     const previousPhase = state.phase;
     const previousRound = state.round;
 
-    // 서버에 저장된 실제 자산 반영
     state.name = account.name;
     state.cash = account.cash;
     state.prices = account.prices;
@@ -434,17 +434,16 @@ async function syncWithServer() {
     state.round = account.round_no;
     state.phase = account.phase;
 
-    // 서버 기준 보유 수량 적용
     state.holdings = {};
 
     for (const item of account.holdings) {
       const stock = STOCKS[item.stock_index];
+
       if (stock) {
         state.holdings[stock.code] = item.quantity;
       }
     }
 
-    // 서버 기준 거래 내역 적용
     state.orders = account.trades.map(t => ({
       type: t.side === 'BUY' ? 'buy' : 'sell',
       name: STOCKS[t.stock_index].name,
@@ -453,7 +452,6 @@ async function syncWithServer() {
       qty: t.quantity
     })).reverse();
 
-    // 관리자가 라운드를 변경한 경우 화면 전환
     if (
       previousPhase !== state.phase ||
       previousRound !== state.round
@@ -463,63 +461,18 @@ async function syncWithServer() {
       } else if (state.phase === 'TRADING') {
         state.page = 'market';
         orderQuantities = Array(8).fill(1);
-     
-} else if (state.phase === 'LOBBY') {
-  state.page = 'lobby';
-} else if (state.phase === 'LOCKED') {
-  state.page = 'locked';
-}
-```
-
-그리고 같은 함수의 아래쪽에서
-
-```javascript
-['lobby', 'briefing', 'market', 'portfolio']
-```
-
-를 다음처럼 바꿔.
-
-```javascript
-['lobby', 'briefing', 'market', 'portfolio', 'locked']
-```
-
-### ④ Commit changes
-
-저장하면 다음 흐름이 가능해져.
-
-<box border radius="lg" padding={3} gap={2}>
-  <row align="center" justify="between">
-    <box align="center" gap={1} flex="1">
-      <icon name="shopping-cart" size="lg"/>
-      <text size="xs" weight="medium">거래 중</text>
-    </box>
-    <icon name="arrow-right" color="tertiary"/>
-    <box align="center" gap={1} flex="1">
-      <icon name="lock-keyhole" size="lg"/>
-      <text size="xs" weight="medium">거래 마감</text>
-    </box>
-    <icon name="arrow-right" color="tertiary"/>
-    <box align="center" gap={1} flex="1">
-      <icon name="chart-no-axes-combined" size="lg"/>
-      <text size="xs" weight="medium">결과 공개</text>
-    </box>
-  </row>
-  <caption>이번 단계는 가운데 거래 마감 화면까지만 연결해. 결과 공개 연결은 다음 단계에서 진행할 거야.</caption>
-</box>
-
-관리자의 거래 마감 명령은 서버에서도 신규 주문을 차단하도록 설계되어 있어. 참가자 화면은 약 5초 간격으로 상태를 확인해 마감 화면으로 전환돼.
-
-**27단계 완료하면 알려줘.** GitHub 코드를 다시 확인하고 결과 공개 기능으로 넘어갈게.
+      } else if (state.phase === 'LOBBY') {
+        state.page = 'lobby';
+      } else if (state.phase === 'LOCKED') {
+        state.page = 'locked';
+      }
     }
 
-    // 기존 규칙·종목 소개 중에는 화면 유지
     persist();
 
-    // 자산 및 라운드 정보 갱신
     if (
-      ['lobby', 'briefing', 'market', 'portfolio'].includes(
-        state.page
-      )
+      ['lobby', 'briefing', 'market', 'portfolio', 'locked']
+        .includes(state.page)
     ) {
       render();
     }
