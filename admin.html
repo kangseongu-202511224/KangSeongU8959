@@ -97,6 +97,19 @@
       </button>
     </div>
 
+<div class="card">
+  <h2>대회 데이터 관리</h2>
+  <p class="small">
+    모든 참가자와 거래 기록을 백업한 뒤
+    대회를 처음 상태로 되돌립니다.
+    관리자 계정은 유지됩니다.
+  </p>
+
+  <button id="resetCompetitionBtn" class="danger">
+    대회 전체 초기화
+  </button>
+</div>
+
     <div class="card">
       <button id="logoutBtn" class="secondary">
         관리자 로그아웃
@@ -301,6 +314,61 @@
       message('초기 연결 오류: ' + error.message);
     }
   }
+
+  $('resetCompetitionBtn').addEventListener(
+    'click',
+    async () => {
+      if (busy) return;
+
+      const typed = prompt(
+        '모든 참가자와 거래 기록을 초기화합니다.\n' +
+        '관리자 계정은 유지됩니다.\n\n' +
+        '계속하려면 "전체 초기화"를 입력하세요.'
+      );
+
+      if (typed !== '전체 초기화') {
+        message('초기화가 취소되었습니다.');
+        return;
+      }
+
+      const confirmed = confirm(
+        '최종 확인\n\n' +
+        '모든 참가자와 거래 기록을 정리하고\n' +
+        '0라운드 대기실로 되돌릴까요?'
+      );
+
+      if (!confirmed) return;
+
+      busy = true;
+      $('resetCompetitionBtn').disabled = true;
+
+      try {
+        const { data, error } = await client.rpc(
+          'ei_reset_competition',
+          { p_confirmation: typed }
+        );
+
+        if (error) throw error;
+
+        message(
+          '대회 초기화 성공!\n' +
+          `정리된 참가자: ${data.deleted_participants}명\n` +
+          `정리된 거래: ${data.deleted_trades}건\n` +
+          `백업 번호: ${data.backup_id}\n` +
+          '현재 상태: 0라운드 · 대기실'
+        );
+
+        await loadGame();
+
+      } catch (error) {
+        message('초기화 실패: ' + error.message);
+      } finally {
+        busy = false;
+        $('resetCompetitionBtn').disabled = false;
+      }
+    }
+  );
+
 
   init();
 </script>
