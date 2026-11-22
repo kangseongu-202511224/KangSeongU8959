@@ -9,16 +9,7 @@
 (() => {
   'use strict';
 
-  // 뉴스 펼침 상태를 기억합니다.
-  let newsExpanded = false;
-
-  document.addEventListener('click', (event) => {
-    const button = event.target.closest('.ei-a-news-toggle');
-    if (!button) return;
-
-    newsExpanded = !newsExpanded;
-    render();
-  });
+  
 
   const sheet = document.createElement('style');
 
