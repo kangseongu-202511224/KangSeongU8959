@@ -9,6 +9,17 @@
 (() => {
   'use strict';
 
+  // 뉴스 펼침 상태를 기억합니다.
+  let newsExpanded = false;
+
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('.ei-a-news-toggle');
+    if (!button) return;
+
+    newsExpanded = !newsExpanded;
+    render();
+  });
+
   const sheet = document.createElement('style');
 
   sheet.textContent = `
@@ -311,6 +322,126 @@
 
   document.head.appendChild(sheet);
 
+  // 최종 A안: 간결한 스크롤형 화면
+  sheet.textContent += `
+    /* 하단 중복 잔액 박스 제거 */
+    .ei-a-cash {
+      display: none !important;
+    }
+
+    /* 뉴스 카드 */
+    .ei-a-news {
+      margin: 14px 0 20px;
+      padding: 13px;
+      background: #fff;
+      border: 1px solid #e3e9f3;
+      border-radius: 15px;
+    }
+
+    .ei-a-news-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 11px;
+      font-size: 12px;
+      color: #56708e;
+      font-weight: 750;
+    }
+
+    .ei-a-news-head b {
+      color: #2472e8;
+    }
+
+    .ei-a-news-preview {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .ei-a-news-image {
+      width: 90px;
+      height: 80px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+
+    .ei-a-news-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .ei-a-news-info strong {
+      font-size: 15px;
+      line-height: 1.4;
+      display: block;
+      word-break: keep-all;
+    }
+
+    .ei-a-news-info p {
+      font-size: 12px;
+      color: #758196;
+      line-height: 1.5;
+      margin: 5px 0 0;
+    }
+
+    .ei-a-news-options {
+      display: grid;
+      gap: 6px;
+      margin-top: 12px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .ei-a-news-options div {
+      background: #f4f7fc;
+      padding: 8px 10px;
+      border-radius: 8px;
+    }
+
+    .ei-a-news-toggle {
+      display: block;
+      width: 100%;
+      padding: 12px 0 3px;
+      background: none;
+      border: none;
+      color: #2472e8;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .ei-a-news-full {
+      margin-top: 14px;
+      border-top: 1px solid #e8edf5;
+      padding-top: 8px;
+    }
+
+    /* 종목별 주문 카드 간격 줄이기 */
+    .ei-a-card {
+      margin: 7px 0;
+      border-radius: 12px;
+    }
+
+    .ei-a-card-top {
+      padding: 10px 11px 7px;
+    }
+
+    .ei-a-card-controls {
+      padding: 0 11px 7px;
+    }
+
+    /* 보유주식과 최근 주문 목록 압축 */
+    .ei-a-row {
+      padding: 9px 0;
+    }
+
+    .ei-a-section {
+      margin: 18px 0 8px;
+      font-size: 17px;
+    }
+  `;
+
   // 기존 매매 기능과 Supabase 주문 RPC를 그대로 사용
   function aMarket() {
     const a = account();
@@ -554,7 +685,52 @@
         </div>
 
         
-        ${newsBlock()}
+        
+<section class="ei-a-news">
+  <div class="ei-a-news-head">
+    <span>ROUND ${state.round} · 경제 뉴스</span>
+    <b>결과 미공개</b>
+  </div>
+
+  <div class="ei-a-news-preview">
+    <img
+      src="${NEWS[state.round - 1].img}"
+      alt="라운드 경제 뉴스"
+      class="ei-a-news-image"
+    >
+
+    <div class="ei-a-news-info">
+      <strong>
+        ${esc(NEWS[state.round - 1].title)}
+      </strong>
+      <p>뉴스를 읽고 투자 방향을 판단하세요.</p>
+    </div>
+  </div>
+
+  <div class="ei-a-news-options">
+    ${NEWS[state.round - 1].options.map((option, i) => `
+      <div>
+        ${state.round === 3 ? '' : String.fromCharCode(65 + i) + '. '}
+        ${esc(option)}
+      </div>
+    `).join('')}
+  </div>
+
+  <button
+    type="button"
+    class="ei-a-news-toggle"
+    aria-expanded="${newsExpanded}"
+  >
+    ${newsExpanded ? '기사 접기 ▲' : '기사 전체 보기 ▼'}
+  </button>
+
+  ${newsExpanded ? `
+    <div class="ei-a-news-full">
+      ${newsBlock()}
+    </div>
+  ` : ''}
+</section>
+
 
 
         ${rows}
