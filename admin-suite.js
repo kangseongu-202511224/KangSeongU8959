@@ -24,7 +24,6 @@
         </div>
         <hr style="border:0;border-top:1px solid #e2e8f0;margin:20px 0">
         <div class="ei-stack">
-          <div><h3>행사장 대형 화면</h3><button id="ei-projection">프로젝터 화면 열기</button><div class="ei-flex"><select id="ei-screen" class="ei-input" style="flex:1"><option value="AUTO">진행 단계에 맞춰 자동</option><option value="BRIEFING">뉴스 브리핑</option><option value="MARKET">시장·종목 화면</option><option value="RESULT">라운드 결과</option><option value="PODIUM">최종 시상대</option></select><button class="ei-mini secondary" id="ei-set-screen">적용</button></div><button id="ei-podium" class="secondary">대형 스크린에 TOP 3 공개</button><p class="ei-note">최종 시상대는 종료 후에만 공개됩니다. 참가자별 결과 공개는 기존 대회 종료 동작을 따릅니다.</p></div>
           <div><h3>전체 참가자 공지</h3><p class="ei-note">현재 공지: <span id="ei-notice-current">없음</span></p><textarea id="ei-notice" rows="3" maxlength="180" placeholder="예: 1분 뒤 거래를 마감합니다."></textarea><div class="ei-flex"><button id="ei-send-notice" class="ei-mini">공지 보내기</button><button id="ei-clear-notice" class="ei-mini secondary">공지 지우기</button></div></div>
         </div>
         <hr style="border:0;border-top:1px solid #e2e8f0;margin:20px 0">
