@@ -521,7 +521,7 @@
         `;
       }).join('');
 
-    const compactNews = NEWS[state.round - 1];
+    
 
     return page(`
       ${brand('ROUND ' + state.round + ' · 거래 중')}
@@ -553,19 +553,9 @@
           </div>
         </div>
 
-        <div class="ei-a-notice">
-          <b>
-            라운드 ${state.round}
-            · ${esc(compactNews.title)}
-          </b>
+        
+        ${newsBlock()}
 
-          <br>
-
-          결과는 거래 마감 후 공개됩니다.
-          표시된 등락률은 첫 시작가 대비
-          현재 확정 주가의 변화이며,
-          새 라운드의 결과는 아직 미공개입니다.
-        </div>
 
         ${rows}
 
