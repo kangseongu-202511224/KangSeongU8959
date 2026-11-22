@@ -30,7 +30,16 @@
         <div class="ei-flex"><button id="ei-export" class="ei-mini secondary">최종 순위·거래·보유종목 CSV 내려받기</button><button id="ei-reset-ops" class="ei-mini secondary">운영 설정만 초기화</button></div>
       </div>
       <div data-ei-panel="participants" class="ei-panel"><h3>참가자 현황</h3><p class="ei-note">45초 이내 접속 신호가 오면 접속 중으로 표시합니다.</p><input class="ei-input" id="ei-search" placeholder="참가자 이름 검색"><div id="ei-participants"></div>
-        <div id="ei-detail-card" hidden style="margin-top:20px"><h3>참가자 상세: <span id="ei-detail-name"></span></h3><div class="ei-detail" id="ei-detail"></div><input type="hidden" id="ei-current-user"><div class="ei-flex" style="margin-top:12px"><input class="ei-input" id="ei-name-change" placeholder="변경할 닉네임" style="flex:1;min-width:150px"><button id="ei-rename" class="ei-mini">이름 변경</button><button id="ei-block" class="ei-mini secondary">거래 제한</button><button id="ei-remove" class="ei-mini danger">참가자 제거</button></div><p class="ei-note">이름 변경·제거는 거래 기록이 없는 대기실에서만 가능하며, 거래 제한은 진행 중에도 적용됩니다.</p></div>
+        <div id="ei-detail-card" hidden style="margin-top:20px"><h3>참가자 상세: <span id="ei-detail-name"></span></h3><div class="ei-detail" id="ei-detail"></div>
+<h4 style="margin:18px 0 8px">
+  개별 주문 내역
+</h4>
+<p class="ei-note" id="ei-order-note">
+  이 참가자의 체결 내역을 확인합니다.
+</p>
+<div id="ei-order-table"></div>
+
+<input type="hidden" id="ei-current-user"><div class="ei-flex" style="margin-top:12px"><input class="ei-input" id="ei-name-change" placeholder="변경할 닉네임" style="flex:1;min-width:150px"><button id="ei-rename" class="ei-mini">이름 변경</button><button id="ei-block" class="ei-mini secondary">거래 제한</button><button id="ei-remove" class="ei-mini danger">참가자 제거</button></div><p class="ei-note">이름 변경·제거는 거래 기록이 없는 대기실에서만 가능하며, 거래 제한은 진행 중에도 적용됩니다.</p></div>
       </div>
       <div data-ei-panel="trades" class="ei-panel"><h3>실시간 거래 모니터링</h3><p class="ei-note" id="ei-trade-total"></p><select id="ei-trade-filter" class="ei-input"><option value="ALL">모든 라운드</option><option value="1">1라운드</option><option value="2">2라운드</option><option value="3">3라운드</option><option value="4">4라운드</option></select><div class="ei-grid" id="ei-volumes" style="margin:12px 0"></div><div id="ei-trade-table"></div><p class="ei-note">화면에는 최근 최대 1500건만 표시됩니다. CSV는 전체 거래를 내려받습니다.</p></div>
       <div data-ei-panel="ranking" class="ei-panel"><h3>관리자 전용 현재 순위</h3><p class="ei-note" id="ei-rank-hint"></p><div id="ei-rank-table"></div></div>
@@ -73,9 +82,9 @@
     $('ei-kpis').innerHTML=kpis.map(([k,v])=>'<div class="ei-kpi"><small>'+k+'</small><b>'+safe(v)+'</b></div>').join('');
     $('ei-substatus').textContent=(ops.trading_paused?'긴급 거래 중단':phaseLabel[game.phase]||game.phase)+' · 마지막 동기화 '+new Date().toLocaleTimeString('ko-KR');
     $('ei-online').textContent=online+'명 / '+participants.length+'명';
-    $('ei-pauser').disabled=busyOps||!game.phase==='TRADING';
+    $('ei-pauser').disabled =busyOps || game.phase !== 'TRADING';
     $('ei-pauser').textContent=ops.trading_paused?'▶ 거래 재개':'Ⅱ 긴급 거래 중단';
-    $('ei-timer-set').disabled=busyOps||!game.phase==='TRADING';
+    $('ei-timer-set').disabled =busyOps || game.phase !== 'TRADING';
     $('ei-notice-current').textContent=ops.announcement||'등록된 공지가 없습니다.';
     if(tab==='participants'){
       const search=$('ei-search').value.trim().toLowerCase();
@@ -147,19 +156,128 @@
     finally{busyOps=false;draw();}
   }
   async function refreshAfter(){const {data,error}=await client.rpc('ei_admin_overview');if(error)throw error;snapshot=data;draw();clock();await loadGame();}
-  function showDetail(id){
-    const p=snapshot?.participants.find(p=>p.user_id===id);if(!p)return;
-    const h=holdingsOf(id).map(h=>S[h.stock_index]+' '+h.quantity+'주').join('\n')||'없음';
-    const t=tradesOf(id).map(t=>'R'+t.round_no+' '+S[t.stock_index]+' '+(t.side==='BUY'?'매수':'매도')+' '+t.quantity+'주 @'+money(t.price)).join('\n')||'없음';
-    $('ei-detail').textContent='이름: '+p.display_name+'\n현금: '+money(p.cash)+'\n평가자산: '+money(valueOf(p))+'\n접속: '+fmt(p.last_seen_at)+'\n\n보유 주식\n'+h+'\n\n최근 거래 기록\n'+t;
-    $('ei-detail-name').textContent=p.display_name;
-    $('ei-name-change').value=p.display_name;
-    $('ei-current-user').value=id;
-    const isBlocked=(snapshot?.blocked||[]).some(b=>b.user_id===id);
-    $('ei-block').textContent=isBlocked?'거래 제한 해제':'거래 제한';
-    $('ei-detail-card').hidden=false;
-    $('ei-detail-card').scrollIntoView({behavior:'smooth',block:'nearest'});
+  
+function orderRows(records) {
+  return table(
+    [
+      '라운드',
+      '체결 시각',
+      '종목',
+      '구분',
+      '수량',
+      '체결 단가',
+      '총 주문 금액'
+    ],
+    records.map(t => [
+      safe('R' + t.round_no),
+      safe(
+        t.created_at
+          ? fmt(t.created_at)
+          : '#' + t.id
+      ),
+      safe(S[t.stock_index] || t.stock_index),
+      t.side === 'BUY'
+        ? '<span class="ei-good">매수</span>'
+        : '<span class="ei-bad">매도</span>',
+      safe(t.quantity),
+      money(t.price),
+      money(
+        Number(t.quantity) * Number(t.price)
+      )
+    ])
+  );
+}
+
+let detailReq = 0;
+
+async function showDetail(id) {
+  const p = snapshot?.participants.find(
+    p => p.user_id === id
+  );
+
+  if (!p) return;
+
+  const holdings = holdingsOf(id)
+    .map(h =>
+      S[h.stock_index] + ' ' + h.quantity + '주'
+    )
+    .join('\n') || '없음';
+
+  $('ei-detail').textContent =
+    '이름: ' + p.display_name +
+    '\n현금: ' + money(p.cash) +
+    '\n평가자산: ' + money(valueOf(p)) +
+    '\n최근 접속: ' + fmt(p.last_seen_at) +
+    '\n\n보유 주식\n' + holdings;
+
+  $('ei-detail-name').textContent =
+    p.display_name;
+
+  $('ei-name-change').value =
+    p.display_name;
+
+  $('ei-current-user').value = id;
+
+  const isBlocked = (
+    snapshot?.blocked || []
+  ).some(b => b.user_id === id);
+
+  $('ei-block').textContent = isBlocked
+    ? '거래 제한 해제'
+    : '거래 제한';
+
+  $('ei-detail-card').hidden = false;
+
+  const request = ++detailReq;
+
+  // 우선 최근 거래부터 표시
+  $('ei-order-note').textContent =
+    '전체 거래 내역을 불러오는 중...';
+
+  $('ei-order-table').innerHTML =
+    orderRows(tradesOf(id));
+
+  $('ei-detail-card').scrollIntoView({
+    behavior: 'smooth',
+    block: 'nearest'
+  });
+
+  try {
+    // 서버의 관리자 전용 조회 함수
+    const { data, error } =
+      await client.rpc('ei_admin_export');
+
+    if (error) throw error;
+
+    if (
+      request !== detailReq ||
+      $('ei-current-user').value !== id
+    ) return;
+
+    const trades = (data.trades || [])
+      .filter(t => t.user_id === id)
+      .sort(
+        (a, b) => Number(b.id) - Number(a.id)
+      );
+
+    $('ei-order-note').textContent =
+      '전체 체결 내역 ' +
+      trades.length +
+      '건 · 최신순';
+
+    $('ei-order-table').innerHTML =
+      orderRows(trades);
+
+  } catch (error) {
+    if (request !== detailReq) return;
+
+    $('ei-order-note').textContent =
+      '전체 조회 실패: ' +
+      error.message +
+      ' · 최근 거래만 표시합니다.';
   }
+}
+
   function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
   function downloadCSV(name,headers,rows){
     const content='\uFEFF'+[headers,...rows].map(row=>row.map(csvCell).join(',')).join('\r\n');
