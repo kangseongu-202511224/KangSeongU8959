@@ -76,9 +76,6 @@
     $('ei-pauser').disabled=busyOps||!game.phase==='TRADING';
     $('ei-pauser').textContent=ops.trading_paused?'▶ 거래 재개':'Ⅱ 긴급 거래 중단';
     $('ei-timer-set').disabled=busyOps||!game.phase==='TRADING';
-    $('ei-podium').disabled=busyOps||game.phase!=='FINISHED';
-    $('ei-podium').textContent=ops.podium_public?'시상대 공개 취소':'대형 스크린에 TOP 3 공개';
-    $('ei-screen').value=ops.screen_mode;
     $('ei-notice-current').textContent=ops.announcement||'등록된 공지가 없습니다.';
     if(tab==='participants'){
       const search=$('ei-search').value.trim().toLowerCase();
@@ -186,8 +183,6 @@
   $('ei-timer-set').addEventListener('click',()=>command('timer',{seconds:Number($('ei-timer').value)}).catch(()=>{}));
   $('ei-send-notice').addEventListener('click',()=>command('announce',{message:$('ei-notice').value}).catch(()=>{}));
   $('ei-clear-notice').addEventListener('click',()=>command('announce',{message:''}).catch(()=>{}));
-  $('ei-set-screen').addEventListener('click',()=>command('screen',{mode:$('ei-screen').value}).catch(()=>{}));
-  $('ei-podium').addEventListener('click',()=>command('podium',{visible:!snapshot.ops.podium_public},'대형 스크린 시상대 공개 상태를 변경할까요?').catch(()=>{}));
   $('ei-search').addEventListener('input',()=>draw());
   $('ei-trade-filter').addEventListener('change',()=>draw());
   $('ei-participants').addEventListener('click',e=>{const b=e.target.closest('[data-ei-detail]');if(b)showDetail(b.dataset.eiDetail)});
@@ -196,7 +191,6 @@
   $('ei-remove').addEventListener('click',()=>{const id=$('ei-current-user').value;const name=$('ei-detail-name').textContent;if(prompt(name+' 참가자를 삭제하려면 이름을 다시 입력해 주세요.')!==name)return;command('remove',{user_id:id},'최종 확인: 대기실에서 이 참가자를 제거할까요?').then(()=>$('ei-detail-card').hidden=true).catch(()=>{})});
   $('ei-export').addEventListener('click',()=>exportFiles().catch(e=>toast('내보내기 실패: '+e.message)));
   $('ei-reset-ops').addEventListener('click',()=>command('reset_ops',{},'참가자는 유지하고 운영 설정과 접속 기록만 초기화할까요?').catch(()=>{}));
-  $('ei-projection').addEventListener('click',()=>window.open('projector.html','_blank','noopener'));
   showTab('overview');
   setInterval(clock,1000);
   setInterval(()=>refresh().catch(e=>console.warn('관리자 데이터 조회 실패',e.message)),5000);
