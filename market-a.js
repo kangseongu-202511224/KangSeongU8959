@@ -676,55 +676,9 @@
         </div>
 
         
-        
-<section class="ei-a-news">
-  <div class="ei-a-news-head">
-    <span>ROUND ${state.round} · 경제 뉴스</span>
-    <b>결과 미공개</b>
-  </div>
+       ${newsBlock()}
 
-  <div class="ei-a-news-preview">
-    <img
-      src="${NEWS[state.round - 1].img}"
-      alt="라운드 경제 뉴스"
-      class="ei-a-news-image"
-    >
-
-    <div class="ei-a-news-info">
-      <strong>
-        ${esc(NEWS[state.round - 1].title)}
-      </strong>
-      <p>뉴스를 읽고 투자 방향을 판단하세요.</p>
-    </div>
-  </div>
-
-  <div class="ei-a-news-options">
-    ${NEWS[state.round - 1].options.map((option, i) => `
-      <div>
-        ${state.round === 3 ? '' : String.fromCharCode(65 + i) + '. '}
-        ${esc(option)}
-      </div>
-    `).join('')}
-  </div>
-
-  <button
-    type="button"
-    class="ei-a-news-toggle"
-    aria-expanded="${newsExpanded}"
-  >
-    ${newsExpanded ? '기사 접기 ▲' : '기사 전체 보기 ▼'}
-  </button>
-
-  ${newsExpanded ? `
-    <div class="ei-a-news-full">
-      ${newsBlock()}
-    </div>
-  ` : ''}
-</section>
-
-
-
-        ${rows}
+       ${rows}
 
         <section aria-label="내 보유주식">
           <h2 class="ei-a-section">
