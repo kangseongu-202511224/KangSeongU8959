@@ -638,16 +638,25 @@ if (state.publishedResult) {
     }
 
 
+    
     persist();
 
-    if (
-      
-['lobby', 'briefing', 'market', 'portfolio', 'locked', 'result', 'final']
+    // 거래 수량을 입력 중이라면 화면을 다시 그리지 않음
+    const editingQuantity =
+      document.activeElement?.matches('.ei-quantity-input');
 
-        .includes(state.page)
+    const gameStageChanged =
+      previousPhase !== state.phase ||
+      previousRound !== state.round;
+
+    if (
+      ['lobby', 'briefing', 'market', 'portfolio', 'locked', 'result', 'final']
+        .includes(state.page) &&
+      (!editingQuantity || gameStageChanged)
     ) {
       render();
     }
+
 
   } catch (error) {
     console.warn('서버 동기화 실패:', error.message);
