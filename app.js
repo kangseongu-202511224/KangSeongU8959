@@ -151,7 +151,57 @@ function footer(label, action, disabled = false, extra = '') {
 }
 
 function page(html,foot=''){return `<div class="app"><main class="page">${html}</main>${foot}</div>`}
-function intro(){return `<div class="app"><main class="welcome"><div class="welogo"><div class="symbol" aria-hidden="true">↗▂▅▇</div><h1>ECONIGHT<br><b>INVEST</b></h1><p>2026 경제인의 밤<br>모의투자 대회</p></div><form id="name-form"><label for="username"><b>참가자 이름</b></label><input id="username" class="name-field" placeholder="이름을 입력해 주세요" autocomplete="name" maxlength="20" required value="${esc(state.name)}"><button type="submit" class="btn">시작하기　›</button></form><p class="muted-mini" style="text-align:center;margin:18px 0">참가자 시점 체험판 · 실제 거래가 아닌 가상 거래입니다</p></main></div>`}
+
+function intro() {
+  return `
+    <div class="app">
+      <main class="welcome">
+        <div class="welogo">
+          <div class="symbol" aria-hidden="true">
+            ↗▂▅▇
+          </div>
+
+          <h1>
+            ECONIGHT<br>
+            <b>INVEST</b>
+          </h1>
+
+          <p>
+            2026 경제인의 밤<br>
+            모의투자 대회
+          </p>
+        </div>
+
+        <form id="name-form">
+          <label for="username">
+            <b>참가자 닉네임</b>
+          </label>
+
+          <input
+            id="username"
+            class="name-field"
+            placeholder="사용할 닉네임을 입력해 주세요"
+            autocomplete="off"
+            maxlength="20"
+            required
+            value="${esc(state.name)}"
+          >
+
+          <button type="submit" class="btn">
+            닉네임으로 참가하기　›
+          </button>
+        </form>
+
+        <p class="muted-mini"
+           style="text-align:center;margin:18px 0">
+          닉네임은 최종 순위표에도 표시됩니다.
+          다른 참가자와 중복되지 않게 입력해 주세요.
+        </p>
+      </main>
+    </div>
+  `;
+}
+
 function rules(){const instructions=[['00','현장 뉴스 브리핑','라운드 시작 전 앞쪽 대형 화면에서 AI 뉴스 브리핑을 시청하세요.'],['01','뉴스 확인','기사와 사진을 보고 직접 투자 방향을 판단하세요.'],['02','주식 거래','초기 현금 100만 원으로 8개 기업을 1주씩 사고팔 수 있습니다.'],['03','마감 후 추첨','마감 후 뉴스 결과를 무작위로 결정합니다.'],['04','주가 발표','뉴스 결말과 8개 기업의 실제 등락률을 함께 확인합니다.'],['05','최종 순위','4라운드 후 남은 현금 + 주식 평가액의 수익률로 경쟁합니다.']];return page(`${brand('대기실 ①')}<h1 class="title">${esc(state.name)}님,<br>대회 규칙을 확인해요</h1><p class="sub">경험이 없어도 뉴스를 읽고 직접 매매할 수 있어요.</p><div class="gap24"></div><div class="grid2"><div class="softcard"><div class="label">초기 투자금</div><div class="big blue">100만원</div></div><div class="softcard"><div class="label">진행 라운드</div><div class="big">4라운드</div></div></div><h2 class="section">대회 진행 방식</h2><div class="card">${instructions.map(a=>`<div class="flex" style="align-items:flex-start;margin:14px 0"><span class="stepdot">${a[0]}</span><div><b>${a[1]}</b><div class="sub">${a[2]}</div></div></div>`).join('')}</div><h2 class="section">주요 규칙</h2><div class="notice">• 기업별 주가 변동률은 <b>매 라운드 -30% ~ +30%</b>입니다.<br>• 같은 산업의 두 기업은 같은 방향으로 움직이지만 변동폭은 다릅니다.<br>• 현금을 모두 투자할 필요는 없어요.<br>• 거래 중에는 어떤 산업이 오를지 알려주지 않습니다.</div>`,footer('다음 · 8개 종목 소개　›','next-stocks'))}
 function stocks(){return page(`${brand('대기실 ②')}<h1 class="title">투자 가능한<br>8개 가상기업</h1><p class="sub">4개 산업군, 각 2개 기업입니다. 첫 라운드의 시작 주가를 확인하세요.</p>${SECTORS.map(sec=>`<h2 class="section">${sec}</h2><div class="card">${STOCKS.filter(s=>s.sector===sec).map(s=>`<div class="stockrow"><div class="flex"><span class="stockicon">${s.icon}</span><div><div class="stockname">${s.name}</div><div class="sector">${s.description}</div></div></div><div class="price num">${won(s.price)}</div></div>`).join('')}</div>`).join('')}`,footer('대기실로 이동하기　›','next-lobby'))}
 function lobby(){return page(`${brand('대기실')}<h1 class="title">대회 시작을<br>기다리고 있어요</h1><p class="sub">${esc(state.name)}님, 참가 등록이 완료됐습니다.</p><div class="gap24"></div><div class="softcard between"><div><div class="label">내 모의투자 자금</div><div class="big blue">1,000,000원</div></div><div style="font-size:37px">💳</div></div><h2 class="section">대회 안내</h2><div class="card"><div class="between"><b>투자 기업</b><span>총 8개</span></div><div class="line"></div><div class="between"><b>투자 라운드</b><span>총 4라운드</span></div><div class="line"></div><div class="between"><b>순위 기준</b><span>최종 수익률</span></div></div><div class="gap24"></div><div class="notice">실제 대회에서는 운영진이 브리핑을 시작하고, 이후 거래 화면을 열어 줍니다. 지금은 <b>참가자 전용 시연</b>이므로 직접 다음 단계로 이동할 수 있어요.</div>`,footer('시연 · 1라운드 브리핑 안내　›','demo-next'))}
@@ -781,7 +831,7 @@ document.addEventListener('submit', async (e) => {
   const name = $('username').value.trim();
 
   if (name.length < 1 || name.length > 20) {
-    return toast('이름은 1~20자로 입력해 주세요.');
+    return toast('닉네임은 1~20자로 입력해 주세요.');
   }
 
   if (submitting) return;
