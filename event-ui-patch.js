@@ -276,63 +276,95 @@
     changeQty(i, (orderQuantities[i] || 1) + delta);
   }, true);
 
-  // 숫자 직접 입력 중 최대 구매량 경고
-  document.addEventListener('input', event => {
-    const field = event.target.closest(
-      '.ei-quantity-input'
-    );
-
-    if (!field || field.value === '') return;
-
+ 
+  // 키보드 입력 시 화면을 다시 그리지 않고 수량만 저장
+  function updateQuantityField(field) {
     const i = Number(field.dataset.eiQty);
-    const requested = Math.trunc(Number(field.value));
-
-    if (!Number.isFinite(requested)) return;
+    if (!Number.isInteger(i) || i < 0 || i >= STOCKS.length) return;
 
     const card = field.closest('.ei-a-card');
+    if (!card) return;
 
-    if (requested > maxBuy(i)) {
+    const buy = card.querySelector('[data-action="inline-buy"]');
+    const sell = card.querySelector('[data-action="inline-sell"]');
+    const plus = card.querySelector('[data-action="ei-plus"]');
+    const minus = card.querySelector('[data-action="ei-minus"]');
+
+    const raw = field.value;
+
+    // 입력 중 잠깐 비어 있을 때는 초기화하지 않음
+    if (raw === '') {
+      if (buy) buy.disabled = true;
+      if (sell) sell.disabled = true;
+      return;
+    }
+
+    const typed = Number(raw);
+    if (!Number.isFinite(typed)) return;
+
+    const limit = maxOrder(i);
+    const cashLimit = maxBuy(i);
+    const held = Number(state.holdings[STOCKS[i].code]) || 0;
+
+    const qty = Math.max(
+      1,
+      Math.min(limit, Math.trunc(typed))
+    );
+
+    // 현금 초과 입력은 제한하고 경고 표시
+    if (typed > cashLimit) {
       warnings[i] = warningText(i);
-
-      let warning = card.querySelector(
-        '.ei-max-warning'
-      );
-
-      if (!warning) {
-        warning = document.createElement('div');
-        warning.className = 'ei-max-warning';
-        warning.setAttribute('role', 'alert');
-        card.appendChild(warning);
-      }
-
-      warning.textContent = warnings[i];
-
-      field.value = String(Math.max(
-        1,
-        Math.min(maxOrder(i), requested)
-      ));
     } else {
       delete warnings[i];
+    }
 
-      card.querySelector(
-        '.ei-max-warning'
-      )?.remove();
+    orderQuantities[i] = qty;
+
+    if (typed !== qty) {
+      field.value = String(qty);
+    }
+
+    // 입력한 수량에 맞춰 버튼 상태 변경
+    if (buy) buy.disabled = qty > cashLimit;
+    if (sell) sell.disabled = qty > held;
+    if (plus) plus.disabled = qty >= limit;
+    if (minus) minus.disabled = qty <= 1;
+
+    let notice = card.querySelector('.ei-max-warning');
+
+    if (warnings[i]) {
+      if (!notice) {
+        notice = document.createElement('div');
+        notice.className = 'ei-max-warning';
+        notice.setAttribute('role', 'alert');
+        card.appendChild(notice);
+      }
+      notice.textContent = warnings[i];
+    } else {
+      notice?.remove();
+    }
+  }
+
+  document.addEventListener('input', event => {
+    if (event.target.matches('.ei-quantity-input')) {
+      updateQuantityField(event.target);
     }
   }, true);
 
-  // 입력 완료 시 수량 및 버튼 갱신
+  // 입력 완료 시에도 render()를 실행하지 않음
   document.addEventListener('change', event => {
-    const field = event.target.closest(
-      '.ei-quantity-input'
-    );
+    if (!event.target.matches('.ei-quantity-input')) return;
 
-    if (!field) return;
+    const field = event.target;
 
-    changeQty(
-      Number(field.dataset.eiQty),
-      field.value
-    );
+    if (field.value === '') {
+      field.value = '1';
+    }
+
+    updateQuantityField(field);
   }, true);
+
+
 
   // 모바일 확대 방지
   const viewport = document.querySelector(
