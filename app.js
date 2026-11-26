@@ -982,13 +982,16 @@ async function syncWithServer() {
     const previousIntroStage = state.introStage;
 
     // 서버 동기화 전 거래 화면 데이터 보관
+    
     const previousMarketSnapshot = JSON.stringify([
       state.cash,
       state.prices,
       state.changes,
       state.holdings,
-      state.orders
+      state.orders,
+      state.previousRoundChanges
     ]);
+
 
     state.introStage = game.intro_stage || 'RULES';
 
@@ -998,6 +1001,23 @@ async function syncWithServer() {
     state.changes = account.changes;
     state.round = account.round_no;
     state.phase = account.phase;
+   
+    // 이미 공개된 직전 라운드의 확정 등락률 불러오기
+    if (state.round >= 2 && state.round <= 4) {
+      try {
+        state.previousRoundChanges =
+          await window.ECONIGHT_LIVE.getPreviousRoundChanges();
+      } catch (error) {
+        console.warn(
+          '직전 라운드 등락률 조회 실패:',
+          error.message
+        );
+        state.previousRoundChanges = null;
+      }
+    } else {
+      state.previousRoundChanges = null;
+    }
+
     state.publishedResult = game.published_result;
     
 
@@ -1113,13 +1133,16 @@ if (state.publishedResult) {
 
     
     // 실제 거래 데이터가 바뀌었는지 확인
+    
     const currentMarketSnapshot = JSON.stringify([
       state.cash,
       state.prices,
       state.changes,
       state.holdings,
-      state.orders
+      state.orders,
+      state.previousRoundChanges
     ]);
+
 
     const marketDataChanged =
       previousMarketSnapshot !== currentMarketSnapshot;
