@@ -77,10 +77,10 @@
 <div class="card">
   
 
-    <div class="card">
-      <h2>진행 관리</h2
-      
-<div style="margin:16px 0 22px;">
+
+<div class="card">
+  <h2>진행 관리</h2>
+
   <p class="small">
     참가자 전체 화면 전환
   </p>
@@ -97,118 +97,33 @@
     ③ 대기실로 이동
   </button>
 
+  <hr style="margin:20px 0;border:0;border-top:1px solid #ddd;">
+
   <p class="small">
-    대회 시작 전에는 관리자가 참가자의 화면을
-    직접 전환할 수 있습니다.
+    라운드 진행 관리
   </p>
+
+  <button data-action="start_round">
+    다음 라운드 브리핑 시작
+  </button>
+
+  <button data-action="open_trading">
+    뉴스 영상 종료 · 거래 시작
+  </button>
+
+  <button data-action="close_trading" class="danger">
+    거래 마감 · 결과 추첨
+  </button>
+
+  <button data-action="reveal">
+    라운드 결과 공개
+  </button>
+
+  <button data-action="finish" class="secondary">
+    최종 대회 종료
+  </button>
 </div>
-```
 
-그러면 관리자 진행 관리 화면이 다음과 같이 바뀔 거야.
-
-<box border radius="lg" padding={3} gap={2}>
-  <title size="lg">진행 관리</title>
-  <text weight="medium" size="sm">참가자 전체 화면 전환</text>
-  <box background="surface-secondary" padding={3} radius="md" gap={2}>
-    <row align="center" gap={2}>
-      <icon name="book-open" color="secondary"/>
-      **① 대회 규칙 화면 표시**
-    </row>
-    <divider color="subtle"/>
-    <row align="center" gap={2}>
-      <icon name="building-2" color="secondary"/>
-      **② 8개 기업 소개 화면 표시**
-    </row>
-    <divider color="subtle"/>
-    <row align="center" gap={2}>
-      <icon name="users" color="secondary"/>
-      **③ 대기실로 이동**
-    </row>
-  </box>
-  <divider/>
-  **기존 진행 버튼**
-  <text color="secondary" size="sm">다음 라운드 브리핑 시작 · 거래 시작 · 거래 마감 · 결과 공개 · 최종 종료</text>
-  <caption>관리자 화면의 구성 예시</caption>
-</box>
-
-## ④ 버튼에 실제 서버 기능 연결
-
-단순히 HTML 버튼만 추가하면 작동하지 않아. 관리자 버튼을 Supabase 함수와 연결해야 해.
-
-같은 `admin.html`에서 아래 문구를 검색해.
-
-```javascript
-$('logoutBtn').addEventListener('click'
-```
-
-그 줄 **바로 위에** 다음 코드를 붙여넣어.
-
-<CodeBlock language="javascript" editable>
-  // 참가자 전체 화면 전환
-  document.querySelectorAll('[data-intro-stage]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (busy || btn.disabled) return;
-
-      const stage = btn.dataset.introStage;
-      const label = btn.textContent.trim();
-
-      if (!confirm(
-        `${label}\n\n모든 참가자의 화면을 변경할까요?`
-      )) return;
-
-      busy = true;
-
-      document.querySelectorAll(
-        '[data-intro-stage]'
-      ).forEach(button => button.disabled = true);
-
-      try {
-        const { error } = await client.rpc(
-          'ei_set_intro_stage',
-          { p_stage: stage }
-        );
-
-        if (error) throw error;
-
-        message('화면 전환 명령 완료: ' + label);
-
-        await loadGame();
-
-      } catch (error) {
-        message('화면 전환 실패: ' + error.message);
-
-      } finally {
-        busy = false;
-
-        document.querySelectorAll(
-          '[data-intro-stage]'
-        ).forEach(button => button.disabled = false);
-      }
-    });
-  });
-
-      <p class="small">
-        모든 진행 명령은 Supabase 서버에서
-        관리자 권한과 현재 단계를 검증합니다.
-      </p>
-      <button data-action="start_round">
-        다음 라운드 브리핑 시작
-      </button>
-      <button data-action="open_trading">
-        뉴스 영상 종료 · 거래 시작
-      </button>
-      <button data-action="close_trading" class="danger">
-        거래 마감 · 결과 추첨
-      </button>
-      <button data-action="reveal">
-        라운드 결과 공개
-      </button>
-      <button data-action="finish" class="secondary">
-        최종 대회 종료
-      </button>
-    </div>
-
-<div class="card">
   <h2>대회 데이터 관리</h2>
   <p class="small">
     모든 참가자와 거래 기록을 백업한 뒤
