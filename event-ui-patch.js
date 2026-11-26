@@ -1,0 +1,350 @@
+
+/* ECONIGHT INVEST · 참가자 화면 개선 */
+(() => {
+  'use strict';
+
+  if (
+    typeof market !== 'function' ||
+    typeof state === 'undefined'
+  ) {
+    console.error('app.js 로드 순서를 확인하세요.');
+    return;
+  }
+
+  const warnings = Object.create(null);
+  const originalMarket = market;
+
+  const style = document.createElement('style');
+  style.textContent = `
+    .ei-a-cost,
+    .ei-a-cash {
+      display: none !important;
+    }
+
+    .ei-quantity-input {
+      width: 48px;
+      text-align: center;
+      border: 0;
+      background: transparent;
+      color: #172a49;
+      font: 800 14px system-ui;
+    }
+
+    .ei-max-warning {
+      padding: 0 12px 10px;
+      color: #d53043;
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.5;
+    }
+
+    .ei-a-card button {
+      touch-action: manipulation;
+    }
+
+    .ei-rank-secret {
+      font-size: 14px;
+      color: #64748b;
+      padding: 10px 14px;
+      margin-top: 12px;
+      background: #f4f7fc;
+      border-radius: 10px;
+    }
+  `;
+  document.head.appendChild(style);
+
+  function maxBuy(i) {
+    const price = Number(state.prices[i]);
+
+    return price > 0
+      ? Math.max(0, Math.floor(state.cash / price))
+      : 0;
+  }
+
+  function maxOrder(i) {
+    const held = Number(
+      state.holdings[STOCKS[i].code]
+    ) || 0;
+
+    return Math.max(1, maxBuy(i), held);
+  }
+
+  function warningText(i) {
+    return (
+      `${STOCKS[i].name}은 현재 현금으로 ` +
+      `최대 ${maxBuy(i)}주까지 매수할 수 있습니다.`
+    );
+  }
+
+  function changeQty(i, value) {
+    if (
+      !Number.isInteger(i) ||
+      i < 0 ||
+      i >= STOCKS.length
+    ) return;
+
+    const requested = Math.trunc(Number(value));
+    if (!Number.isFinite(requested)) return;
+
+    if (requested > maxBuy(i)) {
+      warnings[i] = warningText(i);
+    } else {
+      delete warnings[i];
+    }
+
+    orderQuantities[i] = Math.max(
+      1,
+      Math.min(maxOrder(i), requested)
+    );
+
+    render();
+  }
+
+  market = function enhancedMarket() {
+    const template = document.createElement('template');
+    template.innerHTML = originalMarket();
+
+    const screen = template.content.querySelector(
+      '.ei-a-screen'
+    );
+
+    if (!screen) return template.innerHTML;
+
+    // 중복 주문 금액 및 잔액 영역 삭제
+    screen.querySelectorAll(
+      '.ei-a-cost, .ei-a-cash'
+    ).forEach(el => el.remove());
+
+    // 제목을 매매 목록 아래, 보유주식 위로 이동
+    const heading = screen.querySelector('.ei-a-heading');
+
+    const holdings = screen.querySelector(
+      'section[aria-label="내 보유주식"]'
+    );
+
+    if (heading && holdings) {
+      heading.textContent = '8개 기업 주문창';
+      heading.remove();
+      holdings.before(heading);
+    }
+
+    const cards = screen.querySelectorAll(
+      '.ei-a-card[aria-label$=" 주문"]'
+    );
+
+    cards.forEach((card, i) => {
+      const controls = card.querySelector('.ei-a-qty');
+      if (!controls) return;
+
+      // 기존 주문 수량 표시를 숫자 입력창으로 변경
+      const oldQty = controls.querySelector('span');
+
+      if (oldQty) {
+        const field = document.createElement('input');
+
+        field.type = 'number';
+        field.inputMode = 'numeric';
+        field.min = '1';
+        field.max = String(maxOrder(i));
+        field.step = '1';
+
+        field.value = String(orderQuantities[i]);
+        field.className = 'ei-quantity-input';
+        field.dataset.eiQty = String(i);
+
+        field.setAttribute(
+          'aria-label',
+          `${STOCKS[i].name} 주문 수량`
+        );
+
+        oldQty.replaceWith(field);
+      }
+
+      const plus = controls.querySelector(
+        '[data-action="quantity-plus"]'
+      );
+
+      const minus = controls.querySelector(
+        '[data-action="quantity-minus"]'
+      );
+
+      if (plus) {
+        plus.disabled = false;
+        plus.dataset.action = 'ei-plus';
+      }
+
+      if (minus) {
+        minus.dataset.action = 'ei-minus';
+      }
+
+      // 이전 라운드 대비 확정 등락률 표기
+      const rate = card.querySelector(
+        '.ei-a-price small'
+      );
+
+      if (rate) {
+        const change = Number(state.changes?.[i]);
+        const hasRate = Number.isFinite(change);
+
+        const base = state.round === 1
+          ? '시작가'
+          : `${state.round - 1}R`;
+
+        const rateText = hasRate
+          ? `${change > 0 ? '+' : ''}${change.toFixed(2)}%`
+          : '미공개';
+
+        rate.textContent = `${base} 대비 : ${rateText}`;
+
+        rate.className = change > 0
+          ? 'ei-a-positive'
+          : change < 0
+            ? 'ei-a-negative'
+            : 'ei-a-flat';
+      }
+
+      if (warnings[i]) {
+        const notice = document.createElement('div');
+
+        notice.className = 'ei-max-warning';
+        notice.setAttribute('role', 'alert');
+        notice.textContent = warnings[i];
+
+        card.appendChild(notice);
+      }
+    });
+
+    return template.innerHTML;
+  };
+
+  // 거래 종료 전까지 실제 순위 비공개
+  for (const type of ['briefing', 'result']) {
+    const original = type === 'briefing'
+      ? briefing
+      : result;
+
+    const wrapped = function () {
+      const html = original();
+
+      if (
+        type === 'briefing' &&
+        state.round < 2
+      ) return html;
+
+      const template = document.createElement('template');
+      template.innerHTML = html;
+
+      const main = template.content.querySelector('main');
+
+      if (main) {
+        const rank = document.createElement('div');
+
+        rank.className = 'ei-rank-secret';
+        rank.textContent =
+          '현재 순위 : ??? (최종 발표 후 공개)';
+
+        main.appendChild(rank);
+      }
+
+      return template.innerHTML;
+    };
+
+    if (type === 'briefing') {
+      briefing = wrapped;
+    } else {
+      result = wrapped;
+    }
+  }
+
+  // + / - 버튼
+  document.addEventListener('click', event => {
+    const button = event.target.closest(
+      '[data-action="ei-plus"],' +
+      '[data-action="ei-minus"]'
+    );
+
+    if (!button) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const i = Number(button.dataset.value);
+    const delta = button.dataset.action === 'ei-plus'
+      ? 1
+      : -1;
+
+    changeQty(i, (orderQuantities[i] || 1) + delta);
+  }, true);
+
+  // 숫자 직접 입력 중 최대 구매량 경고
+  document.addEventListener('input', event => {
+    const field = event.target.closest(
+      '.ei-quantity-input'
+    );
+
+    if (!field || field.value === '') return;
+
+    const i = Number(field.dataset.eiQty);
+    const requested = Math.trunc(Number(field.value));
+
+    if (!Number.isFinite(requested)) return;
+
+    const card = field.closest('.ei-a-card');
+
+    if (requested > maxBuy(i)) {
+      warnings[i] = warningText(i);
+
+      let warning = card.querySelector(
+        '.ei-max-warning'
+      );
+
+      if (!warning) {
+        warning = document.createElement('div');
+        warning.className = 'ei-max-warning';
+        warning.setAttribute('role', 'alert');
+        card.appendChild(warning);
+      }
+
+      warning.textContent = warnings[i];
+
+      field.value = String(Math.max(
+        1,
+        Math.min(maxOrder(i), requested)
+      ));
+    } else {
+      delete warnings[i];
+
+      card.querySelector(
+        '.ei-max-warning'
+      )?.remove();
+    }
+  }, true);
+
+  // 입력 완료 시 수량 및 버튼 갱신
+  document.addEventListener('change', event => {
+    const field = event.target.closest(
+      '.ei-quantity-input'
+    );
+
+    if (!field) return;
+
+    changeQty(
+      Number(field.dataset.eiQty),
+      field.value
+    );
+  }, true);
+
+  // 모바일 확대 방지
+  const viewport = document.querySelector(
+    'meta[name="viewport"]'
+  );
+
+  if (viewport) {
+    viewport.content =
+      'width=device-width, initial-scale=1,' +
+      ' maximum-scale=1, user-scalable=no,' +
+      ' viewport-fit=cover';
+  }
+
+  if (state.page === 'market') render();
+})();
