@@ -197,26 +197,53 @@
         '.ei-a-price small'
       );
 
+     
+      // 직전 라운드에서 확정된 실제 등락률 표시
+      const rate = card.querySelector(
+        '.ei-a-price small'
+      );
+
       if (rate) {
-        const change = Number(state.changes?.[i]);
-        const hasRate = Number.isFinite(change);
+        const previousRates = state.previousRoundChanges;
 
-        const base = state.round === 1
-          ? '시작가'
-          : `${state.round - 1}R`;
+        const hasPreviousRate =
+          state.round >= 2 &&
+          Array.isArray(previousRates) &&
+          previousRates.length === STOCKS.length &&
+          previousRates[i] !== null &&
+          previousRates[i] !== undefined &&
+          Number.isFinite(Number(previousRates[i]));
 
-        const rateText = hasRate
-          ? `${change > 0 ? '+' : ''}${change.toFixed(2)}%`
-          : '미공개';
+        if (state.round === 1) {
+          rate.textContent = '대회 시작가';
+          rate.className = 'ei-a-flat';
 
-        rate.textContent = `${base} 대비 : ${rateText}`;
+        } else if (!hasPreviousRate) {
+          rate.textContent =
+            '직전 라운드 등락률 불러오는 중';
+          rate.className = 'ei-a-flat';
 
-        rate.className = change > 0
-          ? 'ei-a-positive'
-          : change < 0
-            ? 'ei-a-negative'
-            : 'ei-a-flat';
+        } else {
+          const change = Number(previousRates[i]);
+
+          const direction = change > 0
+            ? '▲ +'
+            : change < 0
+              ? '▼ '
+              : '― ';
+
+          rate.textContent =
+            `${state.round - 1}라운드 변동률 ` +
+            `${direction}${change.toFixed(2)}%`;
+
+          rate.className = change > 0
+            ? 'ei-a-positive'
+            : change < 0
+              ? 'ei-a-negative'
+              : 'ei-a-flat';
+        }
       }
+
 
       if (warnings[i]) {
         const notice = document.createElement('div');
