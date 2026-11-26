@@ -319,6 +319,54 @@
     });
   });
 
+  // 관리자가 참가자 전체 안내 화면을 변경
+  document.querySelectorAll('[data-intro-stage]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (busy || btn.disabled) return;
+
+      const stage = btn.dataset.introStage;
+      const label = btn.textContent.trim();
+
+      if (!confirm(
+        `${label}\n\n모든 참가자의 화면을 변경할까요?`
+      )) return;
+
+      busy = true;
+
+      document.querySelectorAll(
+        '[data-intro-stage], [data-action]'
+      ).forEach(button => button.disabled = true);
+
+      try {
+        const { error } = await client.rpc(
+          'ei_set_intro_stage',
+          { p_stage: stage }
+        );
+
+        if (error) throw error;
+
+        message('화면 전환 명령 완료: ' + label);
+        await loadGame();
+
+      } catch (error) {
+        message('화면 전환 실패: ' + error.message);
+
+      } finally {
+        busy = false;
+
+        try {
+          await loadGame();
+        } catch (error) {
+          message('상태 조회 실패: ' + error.message);
+        }
+
+        document.querySelectorAll(
+          '[data-intro-stage]'
+        ).forEach(button => button.disabled = false);
+      }
+    });
+  });
+
   $('logoutBtn').addEventListener('click', async () => {
     await client.auth.signOut();
     showLogin();
