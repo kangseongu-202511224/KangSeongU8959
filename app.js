@@ -1030,21 +1030,33 @@ if (state.publishedResult) {
     const editingQuantity =
       document.activeElement?.matches('.ei-quantity-input');
 
-    
-const gameStageChanged =
+ 
+    const gameStageChanged =
       previousPhase !== state.phase ||
       previousRound !== state.round ||
       previousIntroStage !== state.introStage;
 
-    if (
-      
-['rules', 'stocks', 'lobby', 'briefing', 'market', 'portfolio', 'locked', 'result', 'final']
+    // 규칙·기업 소개·대기실은 화면이 변경될 때만 갱신
+    const waitingPages = ['rules', 'stocks', 'lobby'];
 
-        .includes(state.page) &&
+    const shouldRender =
+      gameStageChanged ||
+      !waitingPages.includes(state.page);
+
+    
+
+    if (
+      [
+        'rules', 'stocks', 'lobby',
+        'briefing', 'market', 'portfolio',
+        'locked', 'result', 'final'
+      ].includes(state.page) &&
+      shouldRender &&
       (!editingQuantity || gameStageChanged)
     ) {
       render();
     }
+
 
 
   } catch (error) {
