@@ -9,12 +9,81 @@ const STOCKS=[
  {code:'SBS',name:'삼성바이오새로직스',sector:'바이오·제약',icon:'✧',price:72000,description:'바이오의약품 위탁생산·연구개발 기업'}
 ];
 const SECTORS=['IT·반도체','의류·패션','자동차·모빌리티','바이오·제약'];
-const NEWS=[
- {title:'AI가 전기를 다 쓴다? 전력 우선 공급의 향방',intro:'AI 데이터센터의 전력 수요가 급증하면서 주요 전력회사가 공급 우선순위를 결정할 예정입니다. 데이터센터의 성장과 기존 공장의 생산 안정성 사이에서 어떤 선택을 내릴까요?',options:['AI 데이터센터 우선 공급','일반 산업 공장 우선 공급'],results:['AI 데이터센터에 전력 우선 공급 확정','일반 산업 공장에 전력 우선 공급 확정'],img:'assets/news-1.webp'},
- {title:'미국 대통령 선거, 새로운 대통령은 누구?',intro:'미국의 가상 대통령 선거 개표가 임박했습니다. 기업 규제 완화와 제조업 지원을 강조하는 후보 A, 친환경·복지 산업 육성을 내세운 후보 B가 맞붙습니다.',options:['후보 A · 규제 완화 및 제조업 투자 확대','후보 B · 친환경·복지 및 의료·소비 지원'],results:['기업 규제 완화·제조업 지원 후보 A 당선','친환경·복지 산업 육성 후보 B 당선'],img:'assets/news-2.webp'},
- {title:'외국인, 한국 주식시장에 100조 원 투자!',intro:'글로벌 대형 투자기관들이 국내 증시에 가상의 투자금 100조 원을 배분합니다. 4개 산업 중 무작위로 선정되는 2~3개 산업에 신규 투자금을 집중하고, 나머지 산업은 기존 보유 비중을 줄일 예정입니다. 투자 대상과 배분 결과는 주문 마감 후 공개됩니다.',options:['2~3개 산업에 분산 투자 (구체적 투자 대상 비공개)'],results:[],img:'assets/news-3.webp'},
- {title:'원·달러 환율, 급등일까 급락일까?',intro:'국제 금융시장의 움직임으로 원·달러 환율이 크게 변동할 전망입니다. 수출 대금과 해외 원자재·장비 수입 비용이 함께 달라질 수 있어 국내 산업계가 주목하고 있습니다.',options:['원·달러 환율 상승 · 원화 약세','원·달러 환율 하락 · 원화 강세'],results:['원·달러 환율 상승, 원화 가치 하락','원·달러 환율 하락, 원화 가치 상승'],img:'assets/news-4.webp'}
+
+const NEWS = [
+  {
+    title: '미국 대통령 선거, 새로운 대통령은 누구?',
+    intro:
+      '미국의 가상 대통령 선거 개표가 임박했습니다. ' +
+      '기업 규제 완화와 제조업 지원을 강조하는 후보 A, ' +
+      '친환경·복지 산업 육성을 내세운 후보 B가 맞붙습니다. ' +
+      '선거 결과에 따라 국내 주요 산업의 투자 및 수요 전망이 ' +
+      '달라질 것으로 예상됩니다.',
+    options: [
+      '후보 A · 규제 완화 및 제조업 투자 확대',
+      '후보 B · 친환경·복지 및 의료·소비 지원'
+    ],
+    results: [
+      '기업 규제 완화·제조업 지원 후보 A 당선',
+      '친환경·복지 산업 육성 후보 B 당선'
+    ],
+    img: 'assets/news-2.webp'
+  },
+
+  {
+    title: '긴급 속보 | 해외 무력 충돌 발생…국내 기업 생산시설 2곳 피해',
+    intro:
+      '해외 특정 지역에서 가상의 무력 충돌이 발생하면서 ' +
+      '국내 주요 기업들의 현지 생산시설에도 피해가 발생했습니다. ' +
+      '현재 ECONIGHT INVEST의 8개 기업 중 정확히 2개 기업이 ' +
+      '생산시설 피해로 가동에 차질을 빚고 있는 것으로 확인됐습니다. ' +
+      '그러나 피해 기업의 명단은 아직 공개되지 않았습니다. ' +
+      '과연 어느 두 기업이 피해를 입었을까요?',
+    options: [
+      '8개 기업 중 피해 기업 2곳 비공개',
+      '피해 기업 명단은 거래 마감 후 공개'
+    ],
+    results: [],
+    img: 'assets/news-1.webp'
+  },
+
+  {
+    title: '외국인, 한국 주식시장에 100조 원 투자!',
+    intro:
+      '글로벌 자산운용사가 출시한 한국 주식시장 전문 투자펀드가 ' +
+      '해외 투자자들 사이에서 높은 인기를 끌며 ' +
+      '총 100조 원 규모의 자금 유치에 성공했습니다. ' +
+      '운용사는 유치한 자금을 국내 주식시장에 투자할 예정입니다. ' +
+      '4개 산업 중 무작위로 선정되는 2~3개 산업에 ' +
+      '신규 투자금을 집중하고, 나머지 산업은 기존 보유 비중을 ' +
+      '줄인다는 가상 시나리오입니다. ' +
+      '구체적인 투자 대상은 거래 마감 후 공개됩니다.',
+    options: [
+      '2~3개 산업에 분산 투자 · 투자 대상 비공개'
+    ],
+    results: [],
+    img: 'assets/news-3.webp'
+  },
+
+  {
+    title: '원·달러 환율, 급등일까 급락일까?',
+    intro:
+      '국제 금융시장의 움직임으로 원·달러 환율이 ' +
+      '크게 변동할 전망입니다. ' +
+      '수출 대금과 해외 원자재·장비 수입 비용이 ' +
+      '함께 달라질 수 있어 국내 산업계가 주목하고 있습니다.',
+    options: [
+      '원·달러 환율 상승 · 원화 약세',
+      '원·달러 환율 하락 · 원화 강세'
+    ],
+    results: [
+      '원·달러 환율 상승, 원화 가치 하락',
+      '원·달러 환율 하락, 원화 가치 상승'
+    ],
+    img: 'assets/news-4.webp'
+  }
 ];
+
 const msgRanges=[{min:1,max:1,title:'월스트리트가 당신을 찾습니다.',sub:'ECONIGHT INVEST의 전설적인 투자자 탄생!'},{min:2,max:2,title:'워런 버핏도 긴장할 실력!',sub:'정상까지 단 한 걸음이었습니다.'},{min:3,max:3,title:'여의도의 떠오르는 별!',sub:'당신의 투자 감각, 인정합니다.'},{min:4,max:5,title:'증권사에서 연락 올지도?',sub:'TOP 5에 이름을 올린 투자 고수!'},{min:6,max:10,title:'개미인 줄 알았더니 큰손이었네?',sub:'당당하게 TOP 10 진입 성공!'},{min:11,max:20,title:'경제학과 짬바 어디 안 가네!',sub:'시장을 읽는 감각이 제법인데요?'},{min:21,max:30,title:'시장과 치열한 심리전 한 판!',sub:'4번의 라운드를 멋지게 완주했습니다.'},{min:31,max:40,title:'워런 버핏도 처음엔 초보였다!',sub:'오늘은 경험을, 다음에는 수익을!'},{min:41,max:50,title:'주식시장은 원래 반전 드라마!',sub:'다음 시즌의 주인공은 당신일지도?'}];
 const INITIAL_CASH=1000000;
 const STORAGE_KEY='econight-participant-demo-v4';
@@ -563,20 +632,28 @@ async function syncWithServer() {
     state.phase = account.phase;
     state.publishedResult = game.published_result;
     
+
 if (state.publishedResult) {
-  if (state.round === 3) {
-    // 서버의 산업 번호 1~4를 앱의 0~3으로 변환
+  if (state.round === 2) {
+    // 2라운드: 피해 기업 번호 1~8을 0~7로 변환
     state.outcome =
-      state.publishedResult.selected_sectors.map(
-        sector => sector - 1
-      );
+      (state.publishedResult.damaged_companies || [])
+        .map(index => Number(index) - 1);
+
+  } else if (state.round === 3) {
+    // 3라운드: 투자 산업 번호 1~4를 0~3으로 변환
+    state.outcome =
+      (state.publishedResult.selected_sectors || [])
+        .map(sector => Number(sector) - 1);
+
   } else {
-    // 나머지 라운드는 A(0) 또는 B(1)
+    // 1라운드 미국 대선, 4라운드 환율
     state.outcome = state.publishedResult.choice;
   }
 } else {
   state.outcome = null;
 }
+
 
     state.holdings = {};
 
