@@ -286,7 +286,7 @@ function newsBlock() {
     </div>
   `;
 }
-
+function briefing(){
  const r=state.round;
  return page(`${brand(`ROUND ${r} · 뉴스 브리핑`)}
  <div class="briefing-screen">
