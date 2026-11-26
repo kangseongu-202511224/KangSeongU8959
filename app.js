@@ -209,7 +209,7 @@ function intro() {
   `;
 }
 
-function rules(){const instructions=[['00','현장 뉴스 브리핑','라운드 시작 전 앞쪽 대형 화면에서 AI 뉴스 브리핑을 시청하세요.'],['01','뉴스 확인','기사와 사진을 보고 직접 투자 방향을 판단하세요.'],['02','주식 거래','초기 현금 100만 원으로 8개 기업을 1주씩 사고팔 수 있습니다.'],['03','마감 후 추첨','마감 후 뉴스 결과를 무작위로 결정합니다.'],['04','주가 발표','뉴스 결말과 8개 기업의 실제 등락률을 함께 확인합니다.'],['05','최종 순위','4라운드 후 남은 현금 + 주식 평가액의 수익률로 경쟁합니다.']];return page(`${brand('대기실 ①')}<h1 class="title">${esc(state.name)}님,<br>대회 규칙을 확인해요</h1><p class="sub">경험이 없어도 뉴스를 읽고 직접 매매할 수 있어요.</p><div class="gap24"></div><div class="grid2"><div class="softcard"><div class="label">초기 투자금</div><div class="big blue">100만원</div></div><div class="softcard"><div class="label">진행 라운드</div><div class="big">4라운드</div></div></div><h2 class="section">대회 진행 방식</h2><div class="card">${instructions.map(a=>`<div class="flex" style="align-items:flex-start;margin:14px 0"><span class="stepdot">${a[0]}</span><div><b>${a[1]}</b><div class="sub">${a[2]}</div></div></div>`).join('')}</div><h2 class="section">주요 규칙</h2>
+function rules(){const instructions=[['00','현장 뉴스 브리핑','라운드 시작 전 앞쪽 대형 화면에서 회장님의 경제 뉴스 브리핑을 들어주세요.'],['01','뉴스 확인','기사와 사진을 보고 직접 투자 방향을 판단하세요.'],['02','주식 거래','초기 현금 100만 원으로 8개 기업을 1주씩 사고팔 수 있습니다.'],['03','마감 후 추첨','마감 후 뉴스 결과를 무작위로 결정합니다.'],['04','주가 발표','뉴스 결말과 8개 기업의 실제 등락률을 함께 확인합니다.'],['05','최종 순위','4라운드 후 남은 현금 + 주식 평가액의 수익률로 경쟁합니다.']];return page(`${brand('대기실 ①')}<h1 class="title">${esc(state.name)}님,<br>대회 규칙을 확인해요</h1><p class="sub">경험이 없어도 뉴스를 읽고 직접 매매할 수 있어요.</p><div class="gap24"></div><div class="grid2"><div class="softcard"><div class="label">초기 투자금</div><div class="big blue">100만원</div></div><div class="softcard"><div class="label">진행 라운드</div><div class="big">4라운드</div></div></div><h2 class="section">대회 진행 방식</h2><div class="card">${instructions.map(a=>`<div class="flex" style="align-items:flex-start;margin:14px 0"><span class="stepdot">${a[0]}</span><div><b>${a[1]}</b><div class="sub">${a[2]}</div></div></div>`).join('')}</div><h2 class="section">주요 규칙</h2>
 <div class="notice">
   • 초기 투자금은 <b>1,000,000원</b>입니다.<br>
   • 기업별 주가 변동률은 <b>매 라운드 -50% ~ +50%</b>입니다.<br>
@@ -238,7 +238,13 @@ function briefing(){
    <h1 class="briefing-title">뉴스 브리핑이<br>도착했습니다.</h1>
    <p class="briefing-lead">모두 고개를 들어<br><strong>앞의 큰 화면을 봐주세요.</strong></p>
    <div class="screen-illustration" aria-hidden="true"><div class="display-frame"><div class="display-label">ECONIGHT NEWS</div><div class="display-bars"><i></i><i></i><i></i></div><div class="display-live">● LIVE BRIEFING</div></div><div class="audience-shapes"><span></span><span></span><span></span><span></span><span></span></div></div>
-   <div class="notice briefing-notice"><b>AI 뉴스 영상은 행사장 대형 스크린에서만 재생됩니다.</b><br>이 앱에서는 뉴스 영상이 나오지 않습니다.</div>
+   
+<div class="notice briefing-notice">
+  <b>회장님의 경제 뉴스 브리핑이 진행됩니다.</b><br>
+  모두 앞을 바라보고 브리핑에 집중해 주세요.<br>
+  브리핑 종료 후 주식 거래가 시작됩니다.
+</div>
+
    <div class="briefing-state"><span class="live-dot"></span> 현장 뉴스 브리핑 대기 중</div>
  </div>`,footer('시연 · 브리핑 종료 후 거래 시작　›','demo-trade',false,'<p class="bottom-note">실제 대회에서는 운영진이 거래를 시작하면 화면이 전환됩니다.</p>'));
 }
@@ -918,6 +924,15 @@ async function syncWithServer() {
 
     const previousIntroStage = state.introStage;
 
+    // 서버 동기화 전 거래 화면 데이터 보관
+    const previousMarketSnapshot = JSON.stringify([
+      state.cash,
+      state.prices,
+      state.changes,
+      state.holdings,
+      state.orders
+    ]);
+
     state.introStage = game.intro_stage || 'RULES';
 
     state.name = account.name;
@@ -1039,9 +1054,27 @@ if (state.publishedResult) {
     // 규칙·기업 소개·대기실은 화면이 변경될 때만 갱신
     const waitingPages = ['rules', 'stocks', 'lobby'];
 
+    
+    // 실제 거래 데이터가 바뀌었는지 확인
+    const currentMarketSnapshot = JSON.stringify([
+      state.cash,
+      state.prices,
+      state.changes,
+      state.holdings,
+      state.orders
+    ]);
+
+    const marketDataChanged =
+      previousMarketSnapshot !== currentMarketSnapshot;
+
+    // 거래 데이터 또는 진행 상태가 변경됐을 때만 갱신
     const shouldRender =
       gameStageChanged ||
-      !waitingPages.includes(state.page);
+      (
+        state.page === 'market'
+          ? marketDataChanged
+          : !waitingPages.includes(state.page)
+      );
 
     
 
