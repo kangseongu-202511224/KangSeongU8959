@@ -119,6 +119,12 @@
       screen.appendChild(assetSummary);
     }
 
+    // 수량은 직접 입력만 사용하므로 +/- 버튼 제거
+    screen.querySelectorAll(
+      '[data-action="quantity-plus"],' +
+      '[data-action="quantity-minus"]'
+    ).forEach(button => button.remove());
+
     // 중복 주문 금액 및 잔액 영역 삭제
     screen.querySelectorAll(
       '.ei-a-cost, .ei-a-cash'
