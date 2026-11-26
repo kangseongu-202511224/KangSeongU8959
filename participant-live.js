@@ -84,6 +84,20 @@ window.ECONIGHT_LIVE = (() => {
     return data;
   }
 
+  // 이미 공개된 직전 라운드의 종목별 등락률 조회
+  async function getPreviousRoundChanges() {
+    const { data, error } = await db.rpc(
+      'ei_previous_round_changes'
+    );
+
+    if (error) throw error;
+
+    return Array.isArray(data)
+      ? data.map(Number)
+      : null;
+  }
+
+
   // 서버 검증 매수·매도
   async function placeOrder(
     stockIndex,
@@ -125,14 +139,17 @@ window.ECONIGHT_LIVE = (() => {
 
   
    
+ 
   return {
     db,
     getSession,
     register,
     getAccount,
     getGame,
+    getPreviousRoundChanges,
     placeOrder,
     getLeaderboard
   };
+
 
 })();
