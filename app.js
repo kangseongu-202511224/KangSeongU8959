@@ -350,26 +350,245 @@ function revealDemo(){
  state.results.push({round:state.round,outcome,changes:changes.slice(),prices:state.prices.slice()});
  state.phase='REVEALED';move('result');
 }
-function result(){
- const n=NEWS[state.round-1],idx=state.outcome;
- const resultTag=state.round===3?'투자 산업 발표':`결과 ${String.fromCharCode(65+idx)}`;
- return page(`${brand(`ROUND ${state.round} · 결과 발표`)}
- <h1 class="title">${state.round}라운드<br>결과가 나왔어요</h1>${accountCard()}
- <h2 class="section">뉴스 결말</h2>
- <div class="card"><img src="${n.img}" alt="${esc(n.title)}" class="news-image">
- <span class="pill">${resultTag}</span><h2 class="news-title">${esc(outcomeTitle(state.round,idx))}</h2>
- <p class="news-body">${state.round===3?'4개 산업 중 여러 산업에 자금이 배분됐습니다. 선택되지 않은 산업은 기존 보유 비중을 줄였다는 가상 설정입니다.':'가상의 뉴스 결과가 주문 마감 후 무작위로 결정됐습니다.'}</p></div>
- <h2 class="section">8개 기업 주가 변동</h2>
- <div class="card">${STOCKS.map((s,i)=>`<div class="stockrow"><div><b>${s.name}</b><div class="sector">${s.sector} · ${won(state.prices[i])}</div></div><b class="${state.changes[i]>0?'up':state.changes[i]<0?'down':''}">${pct(state.changes[i])}</b></div>`).join('')}</div>
- <h2 class="section">산업별 상승·하락 이유</h2>
- <div class="card">${SECTORS.map((sec,i)=>{
-   const ch=state.changes[i*2];
-   const sign=ch>0?'▲ 상승':ch<0?'▼ 하락':'― 보합';
-   return `<div class="reasonrow"><div class="between"><b>${esc(sec)}</b><span class="${ch>0?'up':ch<0?'down':''}">${sign}</span></div><p class="reason-text">${esc(sectorReason(state.round,idx,i))}</p></div>`;
- }).join('')}</div>
- <p class="muted-mini" style="margin:16px 0">산업별 이유는 게임용 가상 시나리오 설명이며 실제 주가에 대한 예측은 아닙니다. 변동률은 각 기업의 직전 라운드 가격 대비 −30%~+30%입니다.</p>`,
- footer(state.round===4?'시연 · 최종 순위 발표　›':`시연 · ${state.round+1}라운드 진행　›`,state.round===4?'demo-final':'demo-next'));
+
+function result() {
+  const round = state.round;
+  const news = NEWS[round - 1];
+  const outcome = state.outcome;
+
+  // 서버에서 공개한 결과가 아직 없으면 대기
+  const valid =
+    round === 2 || round === 3
+      ? Array.isArray(outcome) && outcome.length > 0
+      : outcome === 0 || outcome === 1;
+
+  if (!valid) {
+    return page(`
+      ${brand('ROUND ' + round + ' · 결과 발표')}
+      <h1 class="title">결과를 불러오는 중입니다</h1>
+      <p class="sub">운영진의 발표를 기다려 주세요.</p>
+    `);
+  }
+
+  let resultTitle = '';
+  let resultText = '';
+  let resultTag = '';
+  let explanation = '';
+
+  if (round === 1) {
+    // 미국 대통령 선거
+    resultTag = '미국 대통령 선거 결과';
+    resultTitle = news.results[outcome];
+
+    resultText =
+      '가상의 미국 대통령 선거 결과가 발표됐습니다. ' +
+      '산업별 정책 기대에 따라 주가가 변동했습니다.';
+
+  } else if (round === 2) {
+    // 해외 생산시설 피해 기업 2곳 공개
+    const damaged = outcome.filter(
+      i => Number.isInteger(i) && i >= 0 && i < STOCKS.length
+    );
+
+    resultTag = '피해 기업 명단 공개';
+
+    resultTitle =
+      '생산시설 피해 기업 2곳 확인';
+
+    resultText =
+      '피해 기업: ' +
+      damaged.map(i => STOCKS[i].name).join(' · ') +
+      '. 피해 기업은 생산 차질 우려로 주가가 하락하고, ' +
+      '나머지 기업은 상대적인 수요 증가 기대가 ' +
+      '반영됐다는 가상 시나리오입니다.';
+
+    explanation = `
+      <h2 class="section">기업별 피해 여부</h2>
+
+      <div class="card">
+        ${STOCKS.map((stock, i) => {
+          const isDamaged = damaged.includes(i);
+
+          return `
+            <div class="stockrow">
+              <div>
+                <b>${esc(stock.name)}</b>
+                <div class="sector">
+                  ${esc(stock.sector)}
+                </div>
+              </div>
+
+              <b class="${isDamaged ? 'down' : 'up'}">
+                ${isDamaged
+                  ? '생산시설 피해'
+                  : '직접 피해 없음'}
+              </b>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+  } else if (round === 3) {
+    // 외국인 투자 대상 산업 공개
+    const selected = outcome.filter(
+      i => Number.isInteger(i) && i >= 0 && i < SECTORS.length
+    );
+
+    resultTag = '투자 대상 산업 공개';
+
+    resultTitle =
+      '100조 원 투자 대상 산업 발표';
+
+    resultText =
+      '투자 집중 산업: ' +
+      selected.map(i => SECTORS[i]).join(' · ') +
+      '. 투자 대상에서 제외된 산업은 기존 보유 비중을 ' +
+      '줄인다는 가상 설정입니다.';
+
+  } else if (round === 4) {
+    // 환율 뉴스
+    resultTag = '원·달러 환율 결과';
+    resultTitle = news.results[outcome];
+
+    resultText =
+      '가상의 환율 변동 결과가 공개됐습니다. ' +
+      '수출 매출과 수입 비용에 대한 기대가 ' +
+      '산업별 주가에 반영됐습니다.';
+  }
+
+  // 1라운드 미국 대선의 산업별 설명
+  const electionReasons = [
+    [
+      '제조업 투자 지원으로 반도체 설비투자 기대 증가',
+      '제조업 중심 정책으로 소비 지원 기대가 상대적으로 약화',
+      '기업 규제 완화로 자동차 생산·투자 여건 개선 기대',
+      '제조업 중심 정책으로 바이오 지원 기대가 상대적으로 약화'
+    ],
+    [
+      '제조업 직접 지원 기대 축소로 반도체 투자 심리 약화',
+      '가계 소비 지원 확대로 의류·패션 수요 증가 기대',
+      '제조업 투자 지원 기대 축소로 자동차 투자 심리 약화',
+      '의료·복지 지원 확대로 바이오 산업 수요 증가 기대'
+    ]
+  ];
+
+  // 2라운드를 제외한 산업별 이유
+  if (round !== 2) {
+    explanation = `
+      <h2 class="section">산업별 주가 변동 이유</h2>
+
+      <div class="card">
+        ${SECTORS.map((sector, i) => {
+          const change = Number(state.changes[i * 2]) || 0;
+
+          const reason = round === 1
+            ? electionReasons[outcome][i]
+            : sectorReason(round, outcome, i);
+
+          const directionText = change > 0
+            ? '▲ 상승'
+            : change < 0
+              ? '▼ 하락'
+              : '― 보합';
+
+          return `
+            <div class="reasonrow">
+              <div class="between">
+                <b>${esc(sector)}</b>
+
+                <span class="${
+                  change > 0 ? 'up' :
+                  change < 0 ? 'down' : ''
+                }">
+                  ${directionText}
+                </span>
+              </div>
+
+              <p class="reason-text">
+                ${esc(reason)}
+              </p>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  return page(`
+    ${brand('ROUND ' + round + ' · 결과 발표')}
+
+    <h1 class="title">
+      ${round}라운드<br>
+      결과가 나왔어요
+    </h1>
+
+    ${accountCard()}
+
+    <h2 class="section">뉴스 결과</h2>
+
+    <div class="card">
+      <img
+        src="${news.img}"
+        alt="${esc(news.title)}"
+        class="news-image"
+      >
+
+      <span class="pill">${resultTag}</span>
+
+      <h2 class="news-title">
+        ${esc(resultTitle)}
+      </h2>
+
+      <p class="news-body">
+        ${esc(resultText)}
+      </p>
+    </div>
+
+    <h2 class="section">8개 기업 주가 변동</h2>
+
+    <div class="card">
+      ${STOCKS.map((stock, i) => {
+        const change = Number(state.changes[i]) || 0;
+
+        return `
+          <div class="stockrow">
+            <div>
+              <b>${esc(stock.name)}</b>
+
+              <div class="sector">
+                ${esc(stock.sector)}
+                · ${won(state.prices[i])}
+              </div>
+            </div>
+
+            <b class="${
+              change > 0 ? 'up' :
+              change < 0 ? 'down' : ''
+            }">
+              ${pct(change)}
+            </b>
+          </div>
+        `;
+      }).join('')}
+    </div>
+
+    ${explanation}
+
+    <p class="muted-mini" style="margin:16px 0">
+      본 대회는 가상 경제 시나리오입니다.
+      주가 변동률은 직전 라운드 대비
+      −50%~+50% 범위에서 결정됩니다.
+      현재 순위는 최종 발표 후 공개됩니다.
+    </p>
+  `, footer(
+    round === 4
+      ? '최종 순위 발표 대기'
+      : '다음 라운드 대기',
+    round === 4 ? 'demo-final' : 'demo-next'
+  ));
 }
+
 function nextRound(){if(state.phase==='WAITING'){state.round=1;state.phase='BRIEFING';state.changes=STOCKS.map(()=>0);move('briefing')}else if(state.phase==='REVEALED'&&state.round<4){state.round++;state.phase='BRIEFING';state.changes=STOCKS.map(()=>0);orderQuantities=Array(8).fill(1);move('briefing')}}
 function fakeRankings(){const a=account();const names=['김현근','유혜원','박지훈','이서연','정민수','최지현','한지민','오준서','강하늘','김태윤','유민서','송지호','배준호','문지안','오예린'];const names49=[...names,...Array.from({length:34},(_,i)=>`시연참가자${i+16}`)];let out=names49.map((name,i)=>{const rate=30-i*0.95;return{name,rate,assets:Math.round(INITIAL_CASH*(1+rate/100)),mine:false}});out.push({name:state.name,rate:a.rate,assets:a.total,mine:true});out.sort((x,y)=>y.assets-x.assets||x.name.localeCompare(y.name,'ko'));return out.map((x,i)=>({...x,rank:i+1}))}
 
