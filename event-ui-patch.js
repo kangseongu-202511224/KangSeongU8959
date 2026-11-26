@@ -109,6 +109,15 @@
     );
 
     if (!screen) return template.innerHTML;
+    
+    // 자산 현황을 주문 화면 맨 아래로 이동
+    const assetSummary = screen.querySelector(
+      '.ei-a-summary'
+    );
+
+    if (assetSummary) {
+      screen.appendChild(assetSummary);
+    }
 
     // 중복 주문 금액 및 잔액 영역 삭제
     screen.querySelectorAll(
