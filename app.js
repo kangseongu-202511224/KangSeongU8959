@@ -125,7 +125,14 @@ function brand(tag){return `<div class="head"><div class="smallbrand"><span clas
 
 function footer(label, action, disabled = false, extra = '') {
   // 시연용 진행 버튼은 실제 대회에서 표시하지 않음
-  if (action.startsWith('demo-') || action === 'reset') {
+  
+if (
+  action.startsWith('demo-') ||
+  action === 'reset' ||
+  action === 'next-stocks' ||
+  action === 'next-lobby'
+) {
+
     return `
       <div class="bottom">
         <p class="bottom-note">
@@ -909,6 +916,10 @@ async function syncWithServer() {
     const previousPhase = state.phase;
     const previousRound = state.round;
 
+    const previousIntroStage = state.introStage;
+
+    state.introStage = game.intro_stage || 'RULES';
+
     state.name = account.name;
     state.cash = account.cash;
     state.prices = account.prices;
@@ -974,28 +985,30 @@ if (state.publishedResult) {
 
       state.page = 'final';
 
+
+    } else if (state.phase === 'LOBBY') {
+      // 관리자 명령에 따라 참가자 안내 화면 변경
+      if (state.introStage === 'RULES') {
+        state.page = 'rules';
+
+      } else if (state.introStage === 'STOCKS') {
+        state.page = 'stocks';
+
+      } else {
+        state.page = 'lobby';
+      }
+
     } else if (
       previousPhase !== state.phase ||
-      previousRound !== state.round
+      previousRound !== state.round ||
+      previousIntroStage !== state.introStage
     ) {
-     
-      if (
-        state.phase === 'LOBBY' &&
-        (state.page === 'rules' ||
-         state.page === 'stocks')
-      ) {
-        // 규칙·기업 소개 화면은 사용자가 직접 넘길 때까지 유지
-      } else
-
-     if (state.phase === 'BRIEFING') {
+      if (state.phase === 'BRIEFING') {
         state.page = 'briefing';
 
       } else if (state.phase === 'TRADING') {
         state.page = 'market';
         orderQuantities = Array(8).fill(1);
-
-      } else if (state.phase === 'LOBBY') {
-        state.page = 'lobby';
 
       } else if (state.phase === 'LOCKED') {
         state.page = 'locked';
@@ -1009,6 +1022,7 @@ if (state.publishedResult) {
     }
 
 
+
     
     persist();
 
@@ -1016,12 +1030,16 @@ if (state.publishedResult) {
     const editingQuantity =
       document.activeElement?.matches('.ei-quantity-input');
 
-    const gameStageChanged =
+    
+const gameStageChanged =
       previousPhase !== state.phase ||
-      previousRound !== state.round;
+      previousRound !== state.round ||
+      previousIntroStage !== state.introStage;
 
     if (
-      ['lobby', 'briefing', 'market', 'portfolio', 'locked', 'result', 'final']
+      
+['rules', 'stocks', 'lobby', 'briefing', 'market', 'portfolio', 'locked', 'result', 'final']
+
         .includes(state.page) &&
       (!editingQuantity || gameStageChanged)
     ) {
