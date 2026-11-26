@@ -192,10 +192,12 @@
         minus.dataset.action = 'ei-minus';
       }
 
-      // 이전 라운드 대비 확정 등락률 표기
+     
+      // 직전 라운드에서 확정된 실제 등락률 표시
       const rate = card.querySelector(
         '.ei-a-price small'
       );
+  
 
      
       // 직전 라운드에서 확정된 실제 등락률 표시
