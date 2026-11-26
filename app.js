@@ -229,8 +229,64 @@ function lobby(){return page(`${brand('대기실')}<h1 class="title">대회 시�
 </div>
 `,'')}
 function accountCard(){let a=account();return `<div class="softcard"><div class="between"><div><div class="label">${esc(state.name)}님의 총자산</div><div class="big num">${won(a.total)}</div></div><div style="text-align:right"><div class="label">전체 수익률</div><b class="${a.rate>=0?'up':'down'}">${pct(a.rate)}</b></div></div><div class="line"></div><div class="between"><span class="sub">거래 가능 현금</span><b>${won(state.cash)}</b></div></div>`}
-function newsBlock(){const n=NEWS[state.round-1];return `<h2 class="section">라운드 ${state.round} · 경제 뉴스</h2><div class="card"><img class="news-image" src="${n.img}" alt="${esc(n.title)}"><div class="pill" style="display:inline-block">가상 뉴스 · 결말 미공개</div><h2 class="news-title">${esc(n.title)}</h2><p class="news-body">${esc(n.intro)}</p><div class="line"></div><b>${state.round===3?'투자 대상 선정 방식':'발표 가능한 결과'}</b>${n.options.map((opt,i)=>`<div class="choice" style="cursor:default">${state.round===3?'':`<b style="color:#1769f4">${String.fromCharCode(65+i)}</b> · `}${esc(opt)}</div>`).join('')}<div class="notice" style="margin-top:12px">실제 결과와 주가 변동은 <b>거래 마감 후</b> 공개됩니다.</div></div>`}
-function briefing(){
+
+function newsBlock() {
+  const n = NEWS[state.round - 1];
+
+  // 1·4라운드만 A/B 선택지 표시
+  const isChoiceRound =
+    state.round === 1 || state.round === 4;
+
+  const sectionTitle =
+    state.round === 2
+      ? '피해 기업 추첨 안내'
+      : state.round === 3
+        ? '투자 대상 선정 방식'
+        : '발표 가능한 결과';
+
+  return `
+    <h2 class="section">
+      라운드 ${state.round} · 경제 뉴스
+    </h2>
+
+    <div class="card">
+      <img
+        class="news-image"
+        src="${n.img}"
+        alt="${esc(n.title)}"
+      >
+
+      <div class="pill" style="display:inline-block">
+        가상 뉴스 · 결말 미공개
+      </div>
+
+      <h2 class="news-title">${esc(n.title)}</h2>
+
+      <p class="news-body">${esc(n.intro)}</p>
+
+      <div class="line"></div>
+
+      <b>${sectionTitle}</b>
+
+      ${n.options.map((opt, i) => `
+        <div class="choice" style="cursor:default">
+          ${isChoiceRound
+            ? `<b style="color:#1769f4">
+                 ${String.fromCharCode(65 + i)}
+               </b> · `
+            : ''}
+          ${esc(opt)}
+        </div>
+      `).join('')}
+
+      <div class="notice" style="margin-top:12px">
+        실제 결과와 주가 변동은
+        <b>거래 마감 후</b> 공개됩니다.
+      </div>
+    </div>
+  `;
+}
+
  const r=state.round;
  return page(`${brand(`ROUND ${r} · 뉴스 브리핑`)}
  <div class="briefing-screen">
