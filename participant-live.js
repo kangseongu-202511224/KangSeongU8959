@@ -73,7 +73,9 @@ window.ECONIGHT_LIVE = (() => {
     const { data, error } = await db
       .from('ei_game')
       .select(
-        'round_no,phase,prices,changes,published_result'
+        
+'round_no,phase,prices,changes,published_result,intro_stage'
+
       )
       .eq('id', 1)
       .single();
