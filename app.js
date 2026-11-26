@@ -44,7 +44,7 @@ const NEWS = [
       '거래 마감 후 피해 기업 공개'
     ],
     results: [],
-    img: 'assets/news-1.webp'
+   img: 'assets/news-war.png.png'
 
   },
 
