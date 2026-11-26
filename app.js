@@ -214,7 +214,13 @@ function rules(){const instructions=[['00','현장 뉴스 브리핑','라운드 
 </div>
 `,footer('다음 · 8개 종목 소개　›','next-stocks'))}
 function stocks(){return page(`${brand('대기실 ②')}<h1 class="title">투자 가능한<br>8개 가상기업</h1><p class="sub">4개 산업군, 각 2개 기업입니다. 첫 라운드의 시작 주가를 확인하세요.</p>${SECTORS.map(sec=>`<h2 class="section">${sec}</h2><div class="card">${STOCKS.filter(s=>s.sector===sec).map(s=>`<div class="stockrow"><div class="flex"><span class="stockicon">${s.icon}</span><div><div class="stockname">${s.name}</div><div class="sector">${s.description}</div></div></div><div class="price num">${won(s.price)}</div></div>`).join('')}</div>`).join('')}`,footer('대기실로 이동하기　›','next-lobby'))}
-function lobby(){return page(`${brand('대기실')}<h1 class="title">대회 시작을<br>기다리고 있어요</h1><p class="sub">${esc(state.name)}님, 참가 등록이 완료됐습니다.</p><div class="gap24"></div><div class="softcard between"><div><div class="label">내 모의투자 자금</div><div class="big blue">1,000,000원</div></div><div style="font-size:37px">💳</div></div><h2 class="section">대회 안내</h2><div class="card"><div class="between"><b>투자 기업</b><span>총 8개</span></div><div class="line"></div><div class="between"><b>투자 라운드</b><span>총 4라운드</span></div><div class="line"></div><div class="between"><b>순위 기준</b><span>최종 수익률</span></div></div><div class="gap24"></div><div class="notice">실제 대회에서는 운영진이 브리핑을 시작하고, 이후 거래 화면을 열어 줍니다. 지금은 <b>참가자 전용 시연</b>이므로 직접 다음 단계로 이동할 수 있어요.</div>`,footer('시연 · 1라운드 브리핑 안내　›','demo-next'))}
+function lobby(){return page(`${brand('대기실')}<h1 class="title">대회 시작을<br>기다리고 있어요</h1><p class="sub">${esc(state.name)}님, 참가 등록이 완료됐습니다.</p><div class="gap24"></div><div class="softcard between"><div><div class="label">내 모의투자 자금</div><div class="big blue">1,000,000원</div></div><div style="font-size:37px">💳</div></div><h2 class="section">대회 안내</h2><div class="card"><div class="between"><b>투자 기업</b><span>총 8개</span></div><div class="line"></div><div class="between"><b>투자 라운드</b><span>총 4라운드</span></div><div class="line"></div><div class="between"><b>순위 기준</b><span>최종 수익률</span></div></div><div class="gap24"></div>
+<div class="notice">
+  참가 등록이 완료되었습니다.<br>
+  운영진의 안내에 따라 대회가 시작됩니다.<br>
+  1라운드 뉴스 브리핑을 기다려 주세요.
+</div>
+`,'')}
 function accountCard(){let a=account();return `<div class="softcard"><div class="between"><div><div class="label">${esc(state.name)}님의 총자산</div><div class="big num">${won(a.total)}</div></div><div style="text-align:right"><div class="label">전체 수익률</div><b class="${a.rate>=0?'up':'down'}">${pct(a.rate)}</b></div></div><div class="line"></div><div class="between"><span class="sub">거래 가능 현금</span><b>${won(state.cash)}</b></div></div>`}
 function newsBlock(){const n=NEWS[state.round-1];return `<h2 class="section">라운드 ${state.round} · 경제 뉴스</h2><div class="card"><img class="news-image" src="${n.img}" alt="${esc(n.title)}"><div class="pill" style="display:inline-block">가상 뉴스 · 결말 미공개</div><h2 class="news-title">${esc(n.title)}</h2><p class="news-body">${esc(n.intro)}</p><div class="line"></div><b>${state.round===3?'투자 대상 선정 방식':'발표 가능한 결과'}</b>${n.options.map((opt,i)=>`<div class="choice" style="cursor:default">${state.round===3?'':`<b style="color:#1769f4">${String.fromCharCode(65+i)}</b> · `}${esc(opt)}</div>`).join('')}<div class="notice" style="margin-top:12px">실제 결과와 주가 변동은 <b>거래 마감 후</b> 공개됩니다.</div></div>`}
 function briefing(){
@@ -972,7 +978,16 @@ if (state.publishedResult) {
       previousPhase !== state.phase ||
       previousRound !== state.round
     ) {
-      if (state.phase === 'BRIEFING') {
+     
+      if (
+        state.phase === 'LOBBY' &&
+        (state.page === 'rules' ||
+         state.page === 'stocks')
+      ) {
+        // 규칙·기업 소개 화면은 사용자가 직접 넘길 때까지 유지
+      } else
+
+     if (state.phase === 'BRIEFING') {
         state.page = 'briefing';
 
       } else if (state.phase === 'TRADING') {
